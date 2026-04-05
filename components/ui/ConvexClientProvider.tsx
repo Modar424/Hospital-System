@@ -14,10 +14,10 @@ function ConvexClientProvider({ children }: { children: React.ReactNode }) {
  <ClerkProvider  publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
  >
        <ConvexProviderWithClerk  client={convex} useAuth={useAuth}>
-        <Authenticated>
+        <>
           <UserSync/>
             {children}
-        </Authenticated>
+        </>
        </ConvexProviderWithClerk>
     </ClerkProvider>
   )
