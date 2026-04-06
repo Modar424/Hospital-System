@@ -4,7 +4,7 @@ import { api } from '@/convex/_generated/api';
 import { useQuery } from 'convex/react';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import DoctorCard from './DoctorCard';
+import DoctorCard from '../../components/DoctorCard';
 
 function TopDoctors() {
     const doctors = useQuery(api.doctors.getDoctors);
@@ -14,7 +14,7 @@ function TopDoctors() {
 
 
     return (
-        <section className='py-20 bg-muted/30'>
+        <section  className='py-20 bg-muted/30'>
             <div className='container mx-auto px-4'>
                 <div className='flex flex-col md:flex-row justify-between items-end mb-10 gap-4'>
 

@@ -18,7 +18,6 @@ function Page() {
     if (doctor === undefined) {
         return (
             <div className="flex flex-col min-h-screen">
-
                 <main className="grow container mx-auto px-4 py-20 flex items-center justify-center">
                     <div className="animate-pulse flex flex-col items-center gap-4">
                         <div className="w-32 h-32 rounded-full bg-muted" />
@@ -26,7 +25,6 @@ function Page() {
                         <div className="w-64 h-4 rounded bg-muted" />
                     </div>
                 </main>
-
             </div>
         );
     }
@@ -34,25 +32,20 @@ function Page() {
     if (doctor === null) {
         return (
             <div className="flex flex-col min-h-screen">
-
                 <main className="grow flex items-center justify-center">
                     <div className="text-center">
                         <h2 className="text-2xl font-bold mb-2">Doctor Not Found</h2>
                         <p className="text-muted-foreground">The requested doctor profile does not exist.</p>
                     </div>
                 </main>
-
             </div>
         );
     }
+
     return (
         <div className='flex flex-col min-h-screen'>
-            {/* Header / Profile Section */}
-
             <div className='bg-background border-b border-border'>
                 <div className='container mx-auto px-4 py-12 flex flex-col md:flex-row gap-10 items-start'>
-
-                    {/* Image */}
                     <div className="relative w-full md:w-80 aspect-3/4 rounded-2xl overflow-hidden shadow-2xl border border-border">
                         <Image
                             src={doctor.image}
@@ -61,8 +54,6 @@ function Page() {
                             className="object-cover"
                         />
                     </div>
-                    {/* Info */}
-
                     <div className='flex-1 space-y-6'>
                         <div>
                             <div className="flex items-center gap-3 mb-2">
@@ -84,7 +75,6 @@ function Page() {
                                 </div>
                             </div>
                         </div>
-
 
                         <Separator />
 
@@ -110,9 +100,7 @@ function Page() {
                                 <Phone className="mr-2 w-5 h-5" /> Contact
                             </Button>
                         </div>
-
                     </div>
-
                 </div>
             </div>
         </div>

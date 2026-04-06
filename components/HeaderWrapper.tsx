@@ -1,6 +1,6 @@
 "use client"
 
-import Header from "@/hospital-system/components/ui/Header"
+import Header from "@/components/Header"
 
 export default function HeaderWrapper() {
   return <Header />

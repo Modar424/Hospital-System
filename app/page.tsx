@@ -1,7 +1,7 @@
-import Hero from "@/components/ui/Hero"
-import Stats from "@/components/Stats";
-import Categories from "@/components/Categories";
-import TopDoctors from "../components/TopDoctors";
+import Hero from "@/app/._components/Hero"
+import Stats from "@/app/._components/Stats"
+import Categories from "@/app/._components/Categories"
+import TopDoctors from "@/app/._components/TopDoctors"
 
 export default function Home() {
   return (

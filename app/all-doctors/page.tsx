@@ -1,5 +1,5 @@
 "use client"
-import DoctorCard from '@/components/DoctorCard'
+import DoctorCard from "@/components/DoctorCard"
 import { api } from '@/convex/_generated/api';
 import { useQuery } from 'convex/react';
 import { Skeleton } from "@/components/ui/skeleton"
@@ -15,7 +15,6 @@ function AllDoctors() {
             </div>
 
             {!doctors ? (
-                // Loading Skeletons
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
                         <div key={item} className="h-380px w-full rounded-xl border border-border bg-card/50">

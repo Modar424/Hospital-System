@@ -72,10 +72,14 @@ export function BookAppointmentModal({ doctorId, doctorName, department }: BookA
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger>
-                <Button size="lg" className="flex-1 md:flex-none text-lg px-8">
-                    <CalendarIcon className="mr-2 w-5 h-5" /> Book Appointment
-                </Button>
-            </DialogTrigger>
+  <span className={cn(
+    "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+    "bg-primary text-primary-foreground shadow hover:bg-primary/90",
+    "h-11 rounded-md px-8 text-lg flex-1 md:flex-none"
+  )}>
+    <CalendarIcon className="mr-2 w-5 h-5" /> Book Appointment
+  </span>
+</DialogTrigger>
             <DialogContent className="sm:max-w-425px">
                 <DialogHeader>
                     <DialogTitle>Book Appointment</DialogTitle>
