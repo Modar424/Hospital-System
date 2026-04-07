@@ -1,16 +1,15 @@
-import Hero from "@/app/._components/Hero"
-import Stats from "@/app/._components/Stats"
-import Categories from "@/app/._components/Categories"
-import TopDoctors from "@/app/._components/TopDoctors"
+import Hero from '@/components/Hero'
+import Categories from '@/components/Categories'
+import TopDoctors from '@/components/TopDoctors'
+import Stats from '@/components/Stats'
 
-export default function Home() {
+export default function HomePage() {
   return (
-   <>
-
-   <Hero/>
-   <Stats/>
-   <Categories/>
-    <TopDoctors/>
-    </>
-  );
+    <div className="min-h-screen flex flex-col">
+      <Hero />
+      <Categories />
+      <TopDoctors />
+      <Stats />
+    </div>
+  )
 }

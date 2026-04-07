@@ -21,11 +21,13 @@ export default defineSchema({
     }).index("by_name", ["name"]),
 
     patients: defineTable({
-        name: v.string(),
-        email: v.string(),
+        name:            v.string(),
+        email:           v.string(),
         tokenIdentifier: v.string(),
-        role: v.union(v.literal("admin"), v.literal("guest")),
-    }).index("by_token", ["tokenIdentifier"]),
+        role:            v.union(v.literal("admin"), v.literal("guest")),
+    })
+        .index("by_token", ["tokenIdentifier"])
+        .index("by_role",  ["role"]),
 
     appointments: defineTable({
         doctorId: v.optional(v.id("doctors")),

@@ -1,48 +1,35 @@
-"use client";
+"use client"
 
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { useConvexAuth } from "convex/react";
+import { useQuery } from "convex/react"
+import { api } from "@/convex/_generated/api"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
+import { useConvexAuth } from "convex/react"
 
-export default function AdminLayout({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
-    const { isAuthenticated, isLoading } = useConvexAuth();
-    const user = useQuery(api.patients.getUser);
-    const router = useRouter();
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading } = useConvexAuth()
+  const user = useQuery(api.patients.getUser)
+  const router = useRouter()
 
-    useEffect(() => {
-        if (isLoading) return; // Wait for auth to load
+  useEffect(() => {
+    if (isLoading) return
+    if (!isAuthenticated) { router.push("/"); return }
+  }, [isAuthenticated, isLoading, router])
 
-        if (!isAuthenticated) {
-            router.push("/");
-            return;
-        }
+  useEffect(() => {
+    if (user === undefined) return
+    if (user === null || user.role !== "admin") router.push("/")
+  }, [user, router])
 
-        // optimizing this check might be needed if user is loaded async after auth
-        // but typically user hook will load shortly after auth
-    }, [isAuthenticated, isLoading, router]);
+  if (isLoading || user === undefined) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
 
-    useEffect(() => {
-        if (user === undefined) return; // Loading user
-        if (user === null || user.role !== "admin") {
-            router.push("/");
-        }
-    }, [user, router]);
+  if (!isAuthenticated || !user || user.role !== "admin") return null
 
-
-    if (isLoading || user === undefined) {
-        return <div className="flex h-screen w-full items-center justify-center">Loading...</div>;
-    }
-
-    // Double check in render to avoid flash of content
-    if (!isAuthenticated || !user || user.role !== "admin") {
-        return null;
-    }
-
-    return <>{children}</>;
+  return <>{children}</>
 }
