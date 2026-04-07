@@ -5,6 +5,7 @@ import ConvexClientProvider from "@/app/._components/ConvexClientProvider";
 import HeaderWrapper from "@/components/HeaderWrapper";
 import { Toaster } from "sonner";
 import AIChatSidebar from "@/components/AiSidebar";
+import  Footer  from "@/app/._components/Footer";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -35,6 +36,7 @@ export default function RootLayout({
           <AIChatSidebar/>
         </ConvexClientProvider>
         <Toaster/>
+         <Footer />
       </body>
     </html>
   );

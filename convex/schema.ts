@@ -1,14 +1,13 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-
 export default defineSchema({
     doctors: defineTable({
         name: v.string(),
-        category: v.string(), // Matches category name
+        category: v.string(),
         image: v.string(),
         bio: v.string(),
         expertise: v.array(v.string()),
-        experience: v.number(), // Years of experience
+        experience: v.number(),
         location: v.string(),
         contact: v.string(),
     })
@@ -17,14 +16,14 @@ export default defineSchema({
 
     categories: defineTable({
         name: v.string(),
-        icon: v.string(), // Lucide icon name
+        icon: v.string(),
         description: v.optional(v.string()),
     }).index("by_name", ["name"]),
 
     patients: defineTable({
         name: v.string(),
         email: v.string(),
-        tokenIdentifier: v.string(), // Clerk ID
+        tokenIdentifier: v.string(),
         role: v.union(v.literal("admin"), v.literal("guest")),
     }).index("by_token", ["tokenIdentifier"]),
 
@@ -32,7 +31,7 @@ export default defineSchema({
         doctorId: v.optional(v.id("doctors")),
         patientId: v.id("patients"),
         department: v.string(),
-        date: v.number(), // Timestamp
+        date: v.number(),
         status: v.union(v.literal("pending"), v.literal("confirmed"), v.literal("cancelled"), v.literal("completed")),
         notes: v.optional(v.string()),
     })

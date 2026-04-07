@@ -12,7 +12,7 @@ import { api } from '@/convex/_generated/api';
 import { cn } from '@/lib/utils';   
 import { useAction } from 'convex/react';
 import { Bot, Loader2, Send, User } from 'lucide-react';
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 
 type Message = {
     role: "user" | "assistant" | "system";
@@ -26,6 +26,12 @@ function AIChatSidebar() {
     ]);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+
+    // للتمرير التلقائي
+    const scrollRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
 
     // Convex Action
     const sendMessage = useAction(api.actions.chat);
@@ -60,7 +66,7 @@ function AIChatSidebar() {
 
     return (
         <>
-            {/* زر فتح الشات - بدون asChild */}
+            {/* زر فتح الشات */}
             <Button
                 onClick={() => setIsOpen(true)}
                 className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-2xl bg-primary hover:bg-primary/90 z-50 animate-in fade-in zoom-in duration-300"
@@ -124,6 +130,9 @@ function AIChatSidebar() {
                                     </div>
                                 </div>
                             )}
+                            
+                            {/* عنصر التمرير التلقائي */}
+                            <div ref={scrollRef} />
                         </div>
                     </ScrollArea>
 

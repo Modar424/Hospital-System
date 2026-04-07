@@ -12,6 +12,7 @@ import type * as actions from "../actions.js";
 import type * as appointments from "../appointments.js";
 import type * as categories from "../categories.js";
 import type * as doctors from "../doctors.js";
+import type * as migrations from "../migrations.js";
 import type * as patients from "../patients.js";
 import type * as stats from "../stats.js";
 
@@ -26,6 +27,7 @@ declare const fullApi: ApiFromModules<{
   appointments: typeof appointments;
   categories: typeof categories;
   doctors: typeof doctors;
+  migrations: typeof migrations;
   patients: typeof patients;
   stats: typeof stats;
 }>;

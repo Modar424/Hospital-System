@@ -119,6 +119,7 @@ export const myAppointments = query({
             .query("appointments")
             .withIndex("by_patient", (q) => q.eq("patientId", patient._id))
             .collect();
+            
 
         // Join with doctor details
 
