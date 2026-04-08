@@ -19,37 +19,51 @@ import { Calendar, Heart, Shield } from 'lucide-react'
 import { useUser, SignInButton } from '@clerk/nextjs'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
+import { useI18n } from '@/lib/i18n'
 
 const HospitalScene = dynamic(() => import('@/components/HospitalScene'), { ssr: false })
 
-const formSchema = z.object({
-  department: z.string().min(1, 'Please select a department'),
-  doctorId:   z.string().optional(),
-  date:       z.string().min(1, 'Please select a date').refine(
-    (d) => new Date(d) > new Date(),
-    { message: 'Please select a future date' }
-  ),
-  notes: z.string().optional(),
-})
-
-type FormData = z.infer<typeof formSchema>
+type FormData = {
+  department: string
+  doctorId?: string
+  date: string
+  notes?: string
+}
 
 const Hero = () => {
+  const { t } = useI18n()
   const { isSignedIn } = useUser()
   const createAppointment = useMutation(api.appointments.createAppointment)
-  const categories        = useQuery(api.categories.get)
-  
+  const categories = useQuery(api.categories.get)
+
+  const formSchema = z.object({
+    department: z.string().min(1, t('hero_error_department')),
+    doctorId: z.string().optional(),
+    date: z.string().min(1, t('hero_error_date')).refine(
+      (d) => new Date(d) > new Date(),
+      { message: t('hero_error_future_date') }
+    ),
+    notes: z.string().optional(),
+  })
+
   // Typing effect state
   const [displayText, setDisplayText] = useState('')
-  const fullText = 'Advanced Medical Care For You'
-  
+  const fullText = t('hero_title')
+
   useEffect(() => {
-    if (displayText.length < fullText.length) {
-      const timer = setTimeout(() => {
+    const timer = setTimeout(() => {
+      // If the language changed, restart the typing animation from the first character.
+      if (!fullText.startsWith(displayText)) {
+        setDisplayText(fullText.slice(0, 1))
+        return
+      }
+
+      if (displayText.length < fullText.length) {
         setDisplayText(fullText.slice(0, displayText.length + 1))
-      }, 60)
-      return () => clearTimeout(timer)
-    }
+      }
+    }, 60)
+
+    return () => clearTimeout(timer)
   }, [displayText, fullText])
 
   const now = new Date()
@@ -69,23 +83,22 @@ const Hero = () => {
 
   const onSubmit = async (data: FormData) => {
     try {
-      // ✅ doctorId يُرسَل كـ Id<"doctors"> الصحيح
       await createAppointment({
         department: data.department,
         doctorId: data.doctorId ? (data.doctorId as Id<"doctors">) : undefined,
         date: data.date,
         notes: data.notes,
       })
-      toast.success('Appointment booked successfully!')
+      toast.success(t('hero_success'))
       form.reset()
     } catch (error) {
-      const msg = error instanceof Error ? error.message : 'Failed to book appointment'
+      const msg = error instanceof Error ? error.message : t('hero_error')
       toast.error(msg)
     }
   }
 
   return (
-    <section className="relative min-h-[90vh] flex items-center overflow-hidden bg-linear-to-br from-background to-teal-100/40">
+    <section className="relative min-h-[90vh] flex items-center overflow-hidden bg-background hero-mesh">
       {/* Decorative blobs */}
       <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-20 right-10 w-96 h-96 bg-secondary/10 rounded-full blur-3xl pointer-events-none" />
@@ -119,26 +132,26 @@ const Hero = () => {
               </span>
             </h1>
             <p className="text-lg text-muted-foreground max-w-md">
-              Experience expert doctors, state-of-the-art facilities, and compassionate care — all in one place.
+              {t('hero_subtitle')}
             </p>
           </div>
 
           <div className="flex flex-wrap gap-3">
             <Button size="lg" className="bg-primary hover:bg-primary/90 text-white gap-2 rounded-full shadow-lg shadow-primary/25">
               <Calendar className="w-4 h-4" />
-              Book Appointment
+              {t('hero_book')}
             </Button>
             <Link href="/all-doctors">
               <Button size="lg" variant="outline" className="border-primary text-primary hover:bg-primary/5 rounded-full">
                 <Shield className="w-4 h-4 mr-2" />
-                Our Doctors
+                {t('hero_find')}
               </Button>
             </Link>
           </div>
 
           {/* Quick stats */}
           <div className="flex gap-12 pt-2 items-center">
-            {[['500+', 'Doctors'], ['10K+', 'Patients'], ['98%', 'Satisfaction']].map(([num, label]) => (
+            {[['500+', t('hero_stat_doctors')], ['10K+', t('hero_stat_patients')], ['98%', t('hero_stat_satisfaction')]].map(([num, label]) => (
               <div key={label} className="text-center">
                 <div className="text-2xl font-bold text-primary">{num}</div>
                 <div className="text-xs text-muted-foreground">{label}</div>
@@ -151,7 +164,7 @@ const Hero = () => {
               className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap ml-4"
             >
               <Heart className="w-4 h-4" />
-              World-Class Healthcare
+              {t('hero_badge')}
             </motion.div>
           </div>
 
@@ -162,14 +175,14 @@ const Hero = () => {
             transition={{ delay: 0.4 }}
             className="bg-card/90 backdrop-blur-md p-6 rounded-2xl shadow-xl border border-border max-w-md"
           >
-            <h3 className="text-xl font-semibold mb-4 text-foreground">Quick Booking</h3>
+            <h3 className="text-xl font-semibold mb-4 text-foreground">{t('hero_quick_booking')}</h3>
 
             {!isSignedIn ? (
               <div className="text-center space-y-4 py-4">
-                <p className="text-muted-foreground text-sm">Sign in to book an appointment</p>
+                <p className="text-muted-foreground text-sm">{t('hero_signin_prompt')}</p>
                 <SignInButton mode="modal">
                   <Button className="w-full bg-primary hover:bg-primary/90 text-white rounded-full">
-                    Sign In
+                    {t('nav_signin')}
                   </Button>
                 </SignInButton>
               </div>
@@ -177,7 +190,7 @@ const Hero = () => {
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
 
-                {/* ✅ الأقسام من Convex */}
+                {/* Department Selection */}
                 <FormField
                   control={form.control}
                   name="department"
@@ -189,7 +202,7 @@ const Hero = () => {
                       >
                         <FormControl>
                           <SelectTrigger className="border-border focus:border-primary">
-                            <SelectValue placeholder="Select Department" />
+                            <SelectValue placeholder={t('hero_dept_placeholder')} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -199,10 +212,10 @@ const Hero = () => {
                             </SelectItem>
                           )) ?? (
                             <>
-                              <SelectItem value="Cardiology">Cardiology</SelectItem>
-                              <SelectItem value="Neurology">Neurology</SelectItem>
-                              <SelectItem value="Pediatrics">Pediatrics</SelectItem>
-                              <SelectItem value="Orthopedics">Orthopedics</SelectItem>
+                              <SelectItem value="Cardiology">{t('hero_dept_cardiology')}</SelectItem>
+                              <SelectItem value="Neurology">{t('hero_dept_neurology')}</SelectItem>
+                              <SelectItem value="Pediatrics">{t('hero_dept_pediatrics')}</SelectItem>
+                              <SelectItem value="Orthopedics">{t('hero_dept_orthopedics')}</SelectItem>
                             </>
                           )}
                         </SelectContent>
@@ -230,7 +243,7 @@ const Hero = () => {
                   )}
                 />
 
-                {/* ✅ doctorId يُرسَل كـ _id الصحيح */}
+                {/* Doctor Selection */}
                 {selectedDepartment && (
                   <FormField
                     control={form.control}
@@ -245,8 +258,8 @@ const Hero = () => {
                               ) : (
                                 <SelectValue placeholder={
                                   doctors === undefined 
-                                    ? "Loading doctors..." 
-                                    : "Select Doctor (optional)"
+                                    ? t('hero_loading_doctors')
+                                    : t('hero_doctor_optional')
                                 } />
                               )}
                             </SelectTrigger>
@@ -254,14 +267,13 @@ const Hero = () => {
                           <SelectContent>
                             {doctors && doctors.length > 0 ? (
                               doctors.map((doctor: Doc<"doctors">) => (
-                                // ✅ value = doctor._id (Id<"doctors">) وليس doctor.name
                                 <SelectItem key={doctor._id} value={doctor._id}>
                                   {doctor.name}
                                 </SelectItem>
                               ))
                             ) : (
                               <div className="p-2 text-sm text-muted-foreground text-center">
-                                {doctors === undefined ? "Loading..." : "No doctors available"}
+                                {doctors === undefined ? t('hero_loading') : t('hero_no_doctors')}
                               </div>
                             )}
                           </SelectContent>
@@ -279,7 +291,7 @@ const Hero = () => {
                     <FormItem>
                       <FormControl>
                         <Textarea
-                          placeholder="Symptoms or special requirements..."
+                          placeholder={t('hero_notes_placeholder')}
                           {...field}
                           className="border-border focus:border-primary resize-none min-h-20"
                         />
@@ -290,7 +302,7 @@ const Hero = () => {
                 />
 
                 <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-white rounded-full">
-                  Book Now
+                  {t('hero_submit')}
                 </Button>
               </form>
             </Form>

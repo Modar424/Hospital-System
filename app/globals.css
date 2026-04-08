@@ -185,3 +185,112 @@
 .overflow-y-auto::-webkit-scrollbar-thumb:hover {
   background-color: oklch(0.54 0.13 180 / 70%);
 }
+
+
+
+/* ── Global Background Enhancement ── */
+
+/* Subtle dot-grid texture on body */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, oklch(0.54 0.13 180 / 0.06) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.dark body::before {
+  background-image: radial-gradient(circle, oklch(0.6 0.15 180 / 0.04) 1px, transparent 1px);
+}
+
+/* Ensure content sits above texture */
+main, nav, footer {
+  position: relative;
+  z-index: 1;
+}
+
+/* Section alternating subtle tints */
+section:nth-child(even) {
+  background-image: radial-gradient(ellipse 80% 50% at 50% 0%, oklch(0.54 0.13 180 / 0.04), transparent);
+}
+
+/* Card glass shimmer */
+.card-glass {
+  background: oklch(1 0 0 / 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.dark .card-glass {
+  background: oklch(0.15 0.02 240 / 0.8);
+}
+
+/* Glowing primary underline for headings */
+.glow-underline {
+  position: relative;
+  display: inline-block;
+}
+.glow-underline::after {
+  content: '';
+  position: absolute;
+  left: 0; bottom: -4px;
+  width: 100%; height: 3px;
+  background: linear-gradient(90deg, oklch(0.54 0.13 180), oklch(0.7 0.15 160));
+  border-radius: 99px;
+  filter: blur(2px);
+  opacity: 0.7;
+}
+
+/* Smooth page transitions */
+main > * {
+  animation: pageIn 0.4s ease both;
+}
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Frosted header enhancement */
+nav {
+  background: oklch(0.98 0.01 160 / 0.85) !important;
+}
+.dark nav {
+  background: oklch(0.1 0.02 240 / 0.85) !important;
+}
+
+/* Hero section background mesh */
+.hero-mesh {
+  background-image:
+    radial-gradient(ellipse 60% 50% at 20% 60%, oklch(0.54 0.13 180 / 0.12), transparent),
+    radial-gradient(ellipse 40% 40% at 80% 20%, oklch(0.7 0.15 160 / 0.08), transparent),
+    radial-gradient(ellipse 50% 60% at 60% 80%, oklch(0.58 0.18 240 / 0.06), transparent);
+}
+
+/* Appointment card hover glow */
+.apt-card:hover {
+  box-shadow: 0 8px 32px -6px oklch(0.54 0.13 180 / 0.18);
+}
+
+/* Button shine effect */
+.btn-shine {
+  position: relative;
+  overflow: hidden;
+}
+.btn-shine::after {
+  content: '';
+  position: absolute;
+  top: -50%; left: -75%;
+  width: 50%; height: 200%;
+  background: linear-gradient(120deg, transparent, oklch(1 0 0 / 0.2), transparent);
+  transform: skewX(-20deg);
+  transition: left 0.6s ease;
+}
+.btn-shine:hover::after {
+  left: 125%;
+}
+
+[dir="rtl"] {
+  font-family: 'Segoe UI', 'Tahoma', 'Arial', sans-serif;
+}

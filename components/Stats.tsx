@@ -3,20 +3,21 @@ import { api } from '@/convex/_generated/api'
 import { useQuery } from 'convex/react'
 import { Activity, Calendar, UserPlus, Users } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { useI18n } from '@/lib/i18n'
 
 function Stats() {
   const stats = useQuery(api.stats.getStats)
+  const { t } = useI18n()
 
   const statItems = [
-    { label: 'Expert Doctors',      value: stats?.doctors     ?? 0,  icon: Users,    suffix: '+' },
-    { label: 'Departments',          value: stats?.departments ?? 0,  icon: Activity, suffix: ''  },
-    { label: 'Happy Patients',       value: stats?.patients    ?? 0,  icon: UserPlus, suffix: 'K+' },
-    { label: 'Years Experience',     value: stats?.experience  ?? 0,  icon: Calendar, suffix: '+'  },
+    { label: t('stat_doctors'),    value: stats?.doctors     ?? 0, icon: Users,    suffix: '+' },
+    { label: t('stat_departments'),value: stats?.departments ?? 0, icon: Activity, suffix: '' },
+    { label: t('stat_patients'),   value: stats?.patients    ?? 0, icon: UserPlus, suffix: 'K+' },
+    { label: t('stat_experience'), value: stats?.experience  ?? 0, icon: Calendar, suffix: '+' },
   ]
 
   return (
     <section className="py-14 bg-linear-to-r from-primary to-teal-600 relative overflow-hidden">
-      {/* Decorative circles */}
       <div className="absolute -top-10 -left-10 w-40 h-40 bg-white/5 rounded-full" />
       <div className="absolute -bottom-10 -right-10 w-60 h-60 bg-white/5 rounded-full" />
 

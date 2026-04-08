@@ -6,10 +6,12 @@ import { ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import DoctorCard from '@/components/DoctorCard'
 import { motion } from 'framer-motion'
+import { useI18n } from '@/lib/i18n'
 
 function TopDoctors() {
   const doctors = useQuery(api.doctors.getDoctors)
   const topDoctors = doctors ? doctors.slice(0, 4) : []
+  const { t } = useI18n()
 
   return (
     <section className="py-20 bg-muted/30">
@@ -21,16 +23,24 @@ function TopDoctors() {
           className="flex flex-col md:flex-row justify-between items-end mb-10 gap-4"
         >
           <div>
+            <motion.span
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              className="inline-block text-xs font-semibold uppercase tracking-widest text-primary bg-primary/10 px-4 py-1.5 rounded-full mb-3"
+            >
+              {t('doctors_badge')}
+            </motion.span>
             <h2 className="text-3xl md:text-4xl font-bold mb-3">
-              Top <span className="text-primary">Specialists</span>
+              {t('doctors_title')}
             </h2>
             <p className="text-muted-foreground max-w-xl">
-              Our team of experienced doctors is dedicated to providing the best possible care.
+              {t('doctors_subtitle')}
             </p>
           </div>
           <Link href="/all-doctors">
             <Button variant="ghost" className="gap-2 text-primary hover:text-primary/80">
-              View All Doctors <ArrowRight className="w-4 h-4" />
+              {t('doctors_view_all')} <ArrowRight className="w-4 h-4" />
             </Button>
           </Link>
         </motion.div>
@@ -38,15 +48,7 @@ function TopDoctors() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {doctors ? (
             topDoctors.map((doc, i) => (
-              <motion.div
-                key={doc._id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-                viewport={{ once: true }}
-              >
-                <DoctorCard doctor={doc} />
-              </motion.div>
+              <DoctorCard key={doc._id} doctor={doc} index={i} />
             ))
           ) : (
             Array(4).fill(0).map((_, i) => (

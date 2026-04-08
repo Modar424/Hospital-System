@@ -8,16 +8,22 @@ import { SignInButton, UserButton, useAuth } from '@clerk/nextjs'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { ThemeToggle } from '@/components/ThemeToggle'
+import { LangToggle } from '@/components/LangToggle'
+import { useI18n } from '@/lib/i18n'
 
 const Header = () => {
   const { isSignedIn } = useAuth()
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const { t } = useI18n()
 
   const navLinks = [
-    { name: 'Home', href: '/', label: 'Home' },
-    { name: 'Doctors', href: '/all-doctors', label: 'Doctors' },
-    { name: 'Appointments', href: '/appointments', label: 'My Appointments' },
+    { href: '/',            label: t('nav_home') },
+    { href: '/all-doctors', label: t('nav_doctors') },
+    { href: '/appointments',label: t('nav_appointments') },
+    { href: '/about',       label: t('nav_about') },
+    { href: '/faq',         label: t('nav_faq') },
   ]
 
   return (
@@ -30,7 +36,7 @@ const Header = () => {
           <span>HealWell</span>
         </Link>
 
-        <div className="hidden md:flex items-center gap-8">
+        <div className="hidden md:flex items-center gap-7">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -45,16 +51,18 @@ const Header = () => {
           ))}
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <LangToggle />
+          <ThemeToggle />
           {isSignedIn ? (
             <UserButton />
           ) : (
             <div className="hidden md:flex gap-2">
               <SignInButton mode="modal">
-                <Button variant="ghost" size="sm">Sign In</Button>
+                <Button variant="ghost" size="sm">{t('nav_signin')}</Button>
               </SignInButton>
               <SignInButton mode="modal">
-                <Button size="sm" className="bg-primary hover:bg-primary/90">Sign Up</Button>
+                <Button size="sm" className="bg-primary hover:bg-primary/90">{t('nav_signup')}</Button>
               </SignInButton>
             </div>
           )}
@@ -95,10 +103,10 @@ const Header = () => {
               {!isSignedIn && (
                 <div className="flex gap-2 pt-2">
                   <SignInButton mode="modal">
-                    <Button variant="ghost" size="sm" className="w-full">Sign In</Button>
+                    <Button variant="ghost" size="sm" className="w-full">{t('nav_signin')}</Button>
                   </SignInButton>
                   <SignInButton mode="modal">
-                    <Button size="sm" className="w-full bg-primary hover:bg-primary/90">Sign Up</Button>
+                    <Button size="sm" className="w-full bg-primary hover:bg-primary/90">{t('nav_signup')}</Button>
                   </SignInButton>
                 </div>
               )}
