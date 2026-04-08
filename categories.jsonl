@@ -4,3 +4,22 @@
 {"name": "Orthopedics", "icon": "Bone", "description": "Musculoskeletal system and sports injuries"}
 {"name": "Dermatology", "icon": "Activity", "description": "Skin, hair, and nail conditions"}
 {"name": "Ophthalmology", "icon": "Eye", "description": "Eye and vision care"}
+{"name": "Oncology", "icon": "Stethoscope", "description": "Cancer diagnosis and treatment"}
+{"name": "Gastroenterology", "icon": "Stomach", "description": "Digestive system and liver disorders"}
+{"name": "Psychiatry", "icon": "BrainCircuit", "description": "Mental health and emotional well-being"}
+{"name": "Obstetrics", "icon": "Users", "description": "Pregnancy, childbirth, and postpartum care"}
+{"name": "Gynecology", "icon": "Venus", "description": "Female reproductive system health"}
+{"name": "Urology", "icon": "Droplet", "description": "Urinary tract and male reproductive system"}
+{"name": "Pulmonology", "icon": "Lungs", "description": "Respiratory system and lung diseases"}
+{"name": "Endocrinology", "icon": "Flask", "description": "Hormones and metabolic disorders"}
+{"name": "Nephrology", "icon": "Filter", "description": "Kidney function and diseases"}
+{"name": "Rheumatology", "icon": "Hand", "description": "Joints, muscles, and autoimmune diseases"}
+{"name": "Otolaryngology (ENT)", "icon": "Ear", "description": "Ear, nose, and throat conditions"}
+{"name": "Dentistry", "icon": "Smile", "description": "Oral health and dental care"}
+{"name": "Radiology", "icon": "Radio", "description": "Medical imaging and diagnostics"}
+{"name": "Anesthesiology", "icon": "Moon", "description": "Pain management and surgical sedation"}
+{"name": "Emergency Medicine", "icon": "AlertCircle", "description": "Urgent and acute care 24/7"}
+{"name": "Immunology", "icon": "Shield", "description": "Immune system and allergies"}
+{"name": "Hematology", "icon": "Droplets", "description": "Blood disorders and diseases"}
+{"name": "General Surgery", "icon": "Scissors", "description": "Surgical procedures and operations"}
+{"name": "Geriatrics", "icon": "Accessibility", "description": "Healthcare for elderly patients"}

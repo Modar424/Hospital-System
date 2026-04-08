@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# doctor images
+public/doctors/
+!public/doctors/.gitkeep

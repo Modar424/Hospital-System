@@ -22,25 +22,29 @@ function DoctorCard({ doctor }: DoctorCardProps) {
         style={{ boxShadow: '0 4px 20px -5px rgb(13 148 136 / 0.08)' }}
       >
         {/* Image / Avatar */}
-        <div className="relative h-44 w-full overflow-hidden bg-gradient-to-br from-primary/10 to-teal-50 flex items-center justify-center">
+        <div className="relative h-80 w-full overflow-hidden bg-linear-to-br from-primary/10 to-teal-50">
           {!imgError && doctor.image ? (
-            <Image
-              src={doctor.image}
-              alt={doctor.name}
-              fill
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
-              onError={() => setImgError(true)}
-            />
+            <>
+              <Image
+                src={doctor.image}
+                alt={doctor.name}
+                fill
+                sizes="(max-width: 768px) 100vw, 300px"
+                className="object-cover object-center w-full h-full transition-transform duration-500 group-hover:scale-105"
+                onError={() => setImgError(true)}
+                priority={false}
+              />
+              {/* Overlay gradient for text readability */}
+              <div className="absolute inset-0 bg-linear-to-t from-black/30 to-transparent" />
+            </>
           ) : (
-            <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center border-4 border-white shadow-lg">
-              <span className="text-3xl font-bold text-primary">{doctor.name.charAt(0)}</span>
+            <div className="w-full h-full flex items-center justify-center">
+              <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center border-4 border-white shadow-lg">
+                <span className="text-3xl font-bold text-primary">{doctor.name.charAt(0)}</span>
+              </div>
             </div>
           )}
-          {/* Overlay gradient for text readability */}
-          {!imgError && doctor.image && (
-            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-          )}
-          <div className="absolute top-3 right-3">
+          <div className="absolute top-3 right-3 z-10">
             <Badge className="bg-primary/90 text-white border-0 text-xs backdrop-blur-sm">
               {doctor.category}
             </Badge>
