@@ -33,6 +33,13 @@ export default defineSchema({
             v.literal("secretary")
         ),
         doctorId: v.optional(v.id("doctors")), // للربط بين user الدكتور وبيانات الدكتور
+        // بيانات الملف الشخصي للمريض (الطلب الثالث)
+        fullName:        v.optional(v.string()),   // الاسم الثلاثي
+        age:             v.optional(v.number()),
+        dateOfBirth:     v.optional(v.string()),
+        hasChronicDisease: v.optional(v.boolean()),
+        chronicDiseases: v.optional(v.string()),   // وصف الأمراض المزمنة
+        profileCompleted: v.optional(v.boolean()), // هل أكمل المريض ملفه الشخصي
     })
         .index("by_token", ["tokenIdentifier"])
         .index("by_role",  ["role"]),
@@ -50,6 +57,13 @@ export default defineSchema({
         ),
         notes: v.optional(v.string()),
         reportId: v.optional(v.id("reports")), // ربط التقرير الطبي بالموعد
+        // نظام الحذف الذكي - soft delete
+        deletedByPatient: v.optional(v.boolean()),    // المريض حذف من واجهته
+        deletedBySecretary: v.optional(v.boolean()),  // السكرتيرة حذفت من واجهتها
+        // ✨ حقول الإلغاء
+        cancellationReason: v.optional(v.string()),  // سبب الإلغاء
+        cancelledBy: v.optional(v.union(v.literal("patient"), v.literal("secretary"))),  // من ألغى
+        cancelledAt: v.optional(v.number()),  // وقت الإلغاء
     })
         .index("by_doctor", ["doctorId"])
         .index("by_patient", ["patientId"])
@@ -70,6 +84,9 @@ export default defineSchema({
         })),
         notes:           v.optional(v.string()),
         createdAt:       v.number(),
+        // نظام الحذف الذكي للتقارير
+        deletedByPatient: v.optional(v.boolean()),
+        deletedBySecretary: v.optional(v.boolean()),
     })
         .index("by_patient", ["patientId"])
         .index("by_appointment", ["appointmentId"])
@@ -95,6 +112,10 @@ export default defineSchema({
             v.literal("paid")
         ),
         notes:           v.optional(v.string()),
+        // نظام الحذف الذكي للفواتير
+        deletedByPatient: v.optional(v.boolean()),
+        deletedBySecretary: v.optional(v.boolean()),
+        pendingAdminApproval: v.optional(v.boolean()), // في انتظار موافقة الأدمن للحذف النهائي
     })
         .index("by_patient", ["patientId"])
         .index("by_appointment", ["appointmentId"])
@@ -116,7 +137,9 @@ export default defineSchema({
         toUserId:    v.id("patients"),
         type:        v.union(
             v.literal("meeting_request"),
-            v.literal("general")
+            v.literal("general"),
+            v.literal("appointment_cancelled"),
+            v.literal("appointment_cancelled_patient")
         ),
         message:     v.string(),
         isRead:      v.boolean(),

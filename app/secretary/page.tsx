@@ -8,7 +8,7 @@ import {
   Calendar, CheckCircle2, XCircle, Clock, Stethoscope,
   User, FileText, Search, ClipboardList,
   Receipt, ChevronDown, ChevronUp,
-  AlertCircle, Hourglass, TrendingUp
+  AlertCircle, Hourglass, TrendingUp, Trash2, X, Send
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -18,7 +18,7 @@ import Link from 'next/link'
 import { cn } from '@/lib/utils'
 
 // ── Types ─────────────────────────────────────────────────────────────────
-type NavItem = 'appointments' | 'invoices' | 'reports'
+type NavItem = 'appointments' | 'invoices' | 'reports' | 'patients'
 
 // تعريف نوع الـ Status
 type AppointmentStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled'
@@ -92,11 +92,13 @@ function AppointmentRow({
   onConfirm,
   onCancel,
   onComplete,
+  onDelete,
 }: {
   apt: Appointment
   onConfirm: () => void
   onCancel: () => void
   onComplete: () => void
+  onDelete: () => void
 }) {
   const [expanded, setExpanded] = useState(false)
   const cfg = statusConfig[apt.status]
@@ -201,35 +203,129 @@ function AppointmentRow({
                   </button>
                 </>
               )}
+              {apt.status === 'cancelled' && (
+                <button
+                  onClick={onDelete}
+                  className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-slate-50 text-slate-600 border border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors font-medium"
+                >
+                  <XCircle className="w-3.5 h-3.5" /> حذف
+                </button>
+              )}
             </div>
           </div>
         </div>
-
-        {/* Expand notes */}
         {apt.notes && (
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="mt-3 flex items-center gap-1 text-xs text-primary hover:text-primary/80 font-medium"
-          >
-            {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-            {expanded ? 'Hide notes' : 'View notes'}
-          </button>
-        )}
-        <AnimatePresence>
-          {expanded && apt.notes && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="overflow-hidden"
+          <>
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="mt-3 flex items-center gap-1 text-xs text-primary hover:text-primary/80 font-medium"
             >
-              <div className="mt-3 bg-muted/40 rounded-xl px-4 py-3 text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">Notes: </span>{apt.notes}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              {expanded ? 'Hide notes' : 'View notes'}
+            </button>
+            <AnimatePresence>
+              {expanded && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="mt-3 bg-muted/40 rounded-xl px-4 py-3 text-sm text-muted-foreground">
+                    <span className="font-medium text-foreground">Notes: </span>{apt.notes}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </>
+        )}
       </div>
+    </motion.div>
+  )
+}
+
+// ── Cancel Appointment Modal (for Secretary) ───────────────────────────────
+function CancelAppointmentModal({ appointment, onClose }: { 
+  appointment: Appointment; 
+  onClose: () => void;
+}) {
+  const cancelAppt = useMutation(api.appointments.cancelAppointmentWithNotification)
+  const [reason, setReason] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  const handleCancel = async () => {
+    if (!reason.trim()) { 
+      toast.error('Please enter cancellation reason'); 
+      return; 
+    }
+    setSubmitting(true)
+    try {
+      await cancelAppt({ appointmentId: appointment._id, reason: reason.trim() })
+      toast.success('Appointment cancelled successfully')
+      onClose()
+    } catch (e) { 
+      toast.error(e instanceof Error ? e.message : 'Failed to cancel') 
+    } finally { 
+      setSubmitting(false) 
+    }
+  }
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.9, opacity: 0, y: 20 }}
+        className="bg-card rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-border"
+        onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-red-100 dark:bg-red-900/40 rounded-xl flex items-center justify-center">
+              <AlertCircle className="w-5 h-5 text-red-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-lg">Cancel Appointment</h3>
+              <p className="text-xs text-muted-foreground">{formatDate(appointment.date)}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-muted rounded-lg"><X className="w-4 h-4" /></button>
+        </div>
+        
+        <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-3 mb-4">
+          <p className="text-sm text-red-700 dark:text-red-400">
+            This action will cancel the appointment and notify the patient.
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-medium mb-1.5 block">Cancellation Reason *</label>
+            <textarea
+              value={reason}
+              onChange={e => setReason(e.target.value)}
+              rows={3}
+              placeholder="Why are you cancelling this appointment?"
+              className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/30 resize-none"
+            />
+          </div>
+
+          <div className="flex gap-3 pt-1">
+            <Button 
+              variant="outline" 
+              className="flex-1 rounded-full" 
+              onClick={onClose} 
+              disabled={submitting}>
+              Keep Appointment
+            </Button>
+            <Button 
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-full gap-2 shadow-lg shadow-red-500/20"
+              onClick={handleCancel} 
+              disabled={submitting}>
+              <XCircle className="w-4 h-4" />
+              {submitting ? 'Cancelling...' : 'Confirm Cancel'}
+            </Button>
+          </div>
+        </div>
+      </motion.div>
     </motion.div>
   )
 }
@@ -271,13 +367,23 @@ export default function SecretaryPage() {
   const appointments = useQuery(api.appointments.getAppointments) as Appointment[] | undefined
   const invoices     = useQuery(api.invoices.getAllInvoices) as Invoice[] | undefined
   const reports      = useQuery(api.reports.allReports) as Report[] | undefined
+  const allPatients  = useQuery(api.patients.getAllPatients)
   const updateStatus = useMutation(api.appointments.updateStatus)
+  const secretarySoftDelete = useMutation(api.appointments.secretarySoftDelete)
+  const secretarySoftDeleteInvoice = useMutation(api.invoices.secretarySoftDeleteInvoice)
+  const secretarySoftDeleteReport = useMutation(api.reports.secretarySoftDeleteReport)
 
   const [activeNav,    setActiveNav]    = useState<NavItem>('appointments')
   const [statusFilter, setStatusFilter] = useState<AppointmentStatus | 'all'>('all')
   const [search,       setSearch]       = useState('')
   const [confirmModal, setConfirmModal] = useState<{ id: Id<"appointments">; action: 'confirm' | 'cancel' | 'complete' } | null>(null)
+  const [cancellingApt, setCancellingApt] = useState<Appointment | null>(null)  // ✨ جديد
+  const [deleteApptId,    setDeleteApptId]    = useState<Id<"appointments"> | null>(null)
+  const [deleteInvoiceId, setDeleteInvoiceId] = useState<Id<"invoices"> | null>(null)
+  const [deleteReportId,  setDeleteReportId]  = useState<Id<"reports"> | null>(null)
   const [processing,   setProcessing]   = useState(false)
+  const [patientSearch, setPatientSearch] = useState('')
+  const [selectedPatientId, setSelectedPatientId] = useState<Id<"patients"> | null>(null)
 
   // ── Stats ──────────────────────────────────────────────────────────────
   const total      = appointments?.length ?? 0
@@ -300,9 +406,19 @@ export default function SecretaryPage() {
       )
     })
 
-  // ── Actions ────────────────────────────────────────────────────────────
   const handleAction = async () => {
     if (!confirmModal) return
+    
+    // ✨ إذا كانت cancel، افتح Modal بدلاً من تنفيذ مباشرة
+    if (confirmModal.action === 'cancel') {
+      const apt = appointments?.find(a => a._id === confirmModal.id)
+      if (apt) {
+        setCancellingApt(apt)
+      }
+      setConfirmModal(null)
+      return
+    }
+
     setProcessing(true)
     try {
       const statusMap: Record<'confirm' | 'cancel' | 'complete', AppointmentStatus> = {
@@ -331,6 +447,7 @@ export default function SecretaryPage() {
     { key: 'appointments', label: 'Appointments', icon: ClipboardList },
     { key: 'reports',      label: 'Reports',      icon: FileText      },
     { key: 'invoices',     label: 'Invoices',     icon: Receipt       },
+    { key: 'patients',     label: 'Patients',     icon: User          },
   ]
 
   const statCards = [
@@ -478,6 +595,7 @@ export default function SecretaryPage() {
                     onConfirm={()  => setConfirmModal({ id: apt._id, action: 'confirm'  })}
                     onCancel={()   => setConfirmModal({ id: apt._id, action: 'cancel'   })}
                     onComplete={()=> setConfirmModal({ id: apt._id, action: 'complete' })}
+                    onDelete={()   => setDeleteApptId(apt._id)}
                   />
                 ))}
               </div>
@@ -510,7 +628,7 @@ export default function SecretaryPage() {
                   <table className="w-full text-sm">
                     <thead className="bg-muted/50 border-b border-border">
                       <tr>
-                        {['Invoice #', 'Patient', 'Doctor', 'Condition', 'Doctor Fees', 'Med Fees', 'Status', 'Date'].map(h => (
+                        {['Invoice #', 'Patient', 'Doctor', 'Condition', 'Doctor Fees', 'Med Fees', 'Status', 'Date', ''].map(h => (
                           <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase whitespace-nowrap">
                             {h}
                           </th>
@@ -549,6 +667,15 @@ export default function SecretaryPage() {
                           </td>
                           <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
                             {new Date(inv._creationTime).toLocaleDateString()}
+                          </td>
+                          <td className="px-4 py-3">
+                            <button
+                              onClick={() => setDeleteInvoiceId(inv._id as Id<"invoices">)}
+                              className="text-xs flex items-center gap-1 px-2.5 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-red-600 hover:border-red-200 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                              title="Delete invoice"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
                           </td>
                         </tr>
                       ))}
@@ -654,6 +781,17 @@ export default function SecretaryPage() {
                           <div className="text-sm text-amber-900 dark:text-amber-300">{report.notes}</div>
                         </div>
                       )}
+
+                      {/* Delete button */}
+                      <div className="mt-4 flex justify-end">
+                        <button
+                          onClick={() => setDeleteReportId(report._id as Id<"reports">)}
+                          className="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-red-600 hover:border-red-200 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          Delete Report
+                        </button>
+                      </div>
                     </div>
                   </motion.div>
                 ))}
@@ -662,7 +800,218 @@ export default function SecretaryPage() {
           </motion.div>
         )}
 
+        {/* ── PATIENTS TAB ─────────────────────────────────────────────── */}
+        {activeNav === 'patients' && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold">Patient Files</h1>
+              <p className="text-muted-foreground text-sm mt-0.5">
+                Browse registered patients and view their full profile & appointments
+              </p>
+            </div>
+
+            {/* Search */}
+            <div className="relative mb-6">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <input
+                value={patientSearch}
+                onChange={e => { setPatientSearch(e.target.value); setSelectedPatientId(null) }}
+                placeholder="Search patient by name or email..."
+                className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-border bg-muted/40 text-sm focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+              />
+            </div>
+
+            {allPatients === undefined ? (
+              <div className="space-y-3">
+                {Array(4).fill(0).map((_, i) => <div key={i} className="h-20 rounded-2xl bg-muted animate-pulse" />)}
+              </div>
+            ) : allPatients.length === 0 ? (
+              <div className="text-center py-20 text-muted-foreground">
+                <User className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                <p className="font-medium">No registered patients yet</p>
+              </div>
+            ) : (() => {
+              const filtered = allPatients.filter(p =>
+                (p.fullName || p.name).toLowerCase().includes(patientSearch.toLowerCase()) ||
+                p.email.toLowerCase().includes(patientSearch.toLowerCase())
+              )
+              return (
+                <div className="space-y-3">
+                  {filtered.map((patient) => {
+                    const isOpen = selectedPatientId === patient._id
+                    const shortId = patient._id.toString().slice(-8).toUpperCase()
+                    return (
+                      <motion.div
+                        key={patient._id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-card border border-border rounded-2xl overflow-hidden hover:shadow-md hover:border-primary/20 transition-all"
+                      >
+                        <div className="h-1 w-full bg-linear-to-r from-primary to-teal-400" />
+                        <div className="p-5">
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-4">
+                              <div className="w-11 h-11 bg-primary/10 rounded-2xl flex items-center justify-center shrink-0">
+                                <User className="w-5 h-5 text-primary" />
+                              </div>
+                              <div>
+                                <div className="font-bold">{patient.fullName || patient.name}</div>
+                                <div className="text-xs text-muted-foreground font-mono">ID: {shortId}</div>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => setSelectedPatientId(isOpen ? null : patient._id as Id<"patients">)}
+                              className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 font-medium transition-colors"
+                            >
+                              {isOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                              {isOpen ? 'Hide' : 'View File'}
+                            </button>
+                          </div>
+
+                          <AnimatePresence>
+                            {isOpen && (
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="overflow-hidden"
+                              >
+                                <div className="mt-4 pt-4 border-t border-border grid grid-cols-2 gap-3 text-sm">
+                                  <div className="bg-muted/40 rounded-xl p-3">
+                                    <div className="text-xs text-muted-foreground mb-1">Full Name</div>
+                                    <div className="font-medium">{patient.fullName || '—'}</div>
+                                  </div>
+                                  <div className="bg-muted/40 rounded-xl p-3">
+                                    <div className="text-xs text-muted-foreground mb-1">Age</div>
+                                    <div className="font-medium">{patient.age ?? '—'}</div>
+                                  </div>
+                                  <div className="bg-muted/40 rounded-xl p-3">
+                                    <div className="text-xs text-muted-foreground mb-1">Date of Birth</div>
+                                    <div className="font-medium">{patient.dateOfBirth || '—'}</div>
+                                  </div>
+                                  <div className="bg-muted/40 rounded-xl p-3">
+                                    <div className="text-xs text-muted-foreground mb-1">Email</div>
+                                    <div className="font-medium text-xs truncate">{patient.email}</div>
+                                  </div>
+                                  <div className="col-span-2 bg-muted/40 rounded-xl p-3">
+                                    <div className="text-xs text-muted-foreground mb-1">Chronic Diseases</div>
+                                    <div className="font-medium">
+                                      {patient.hasChronicDisease
+                                        ? (patient.chronicDiseases || 'Yes (unspecified)')
+                                        : 'None'}
+                                    </div>
+                                  </div>
+                                  <div className="col-span-2 bg-primary/5 border border-primary/20 rounded-xl p-3">
+                                    <div className="text-xs text-muted-foreground mb-1">Patient ID (Full)</div>
+                                    <div className="font-mono font-bold text-primary text-xs break-all">{patient._id}</div>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      </motion.div>
+                    )
+                  })}
+                  {filtered.length === 0 && (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <Search className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                      <p className="font-medium">No patients match your search</p>
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
+          </motion.div>
+        )}
+
       </main>
+
+      {/* ── Invoice Delete Modal ──────────────────────────────────────────── */}
+      <AnimatePresence>
+        {deleteInvoiceId && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => !processing && setDeleteInvoiceId(null)}
+          >
+            <motion.div initial={{ scale: 0.85, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.85, opacity: 0, y: 20 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              className="bg-card rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-border"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="w-16 h-16 bg-red-100 dark:bg-red-950/40 rounded-full flex items-center justify-center mx-auto mb-5">
+                <AlertCircle className="w-8 h-8 text-red-500" />
+              </div>
+              <h3 className="font-bold text-xl text-center mb-2">Delete Invoice?</h3>
+              <p className="text-muted-foreground text-sm text-center mb-2 leading-relaxed">
+                This invoice will be hidden from your view. If the patient has also deleted it, it will be sent for <strong>Admin approval</strong> before permanent deletion.
+              </p>
+              <div className="flex gap-3 mt-6">
+                <Button variant="outline" className="flex-1 rounded-full" onClick={() => setDeleteInvoiceId(null)}>Cancel</Button>
+                <Button className="flex-1 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg shadow-red-500/20"
+                  disabled={processing}
+                  onClick={async () => {
+                    if (!deleteInvoiceId) return
+                    setProcessing(true)
+                    try {
+                      await secretarySoftDeleteInvoice({ invoiceId: deleteInvoiceId })
+                      toast.success('Invoice deleted from your view')
+                      setDeleteInvoiceId(null)
+                    } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed') }
+                    finally { setProcessing(false) }
+                  }}
+                >
+                  {processing ? 'Deleting...' : 'Yes, Delete'}
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Report Delete Modal ───────────────────────────────────────────── */}
+      <AnimatePresence>
+        {deleteReportId && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => !processing && setDeleteReportId(null)}
+          >
+            <motion.div initial={{ scale: 0.85, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.85, opacity: 0, y: 20 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              className="bg-card rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-border"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="w-16 h-16 bg-red-100 dark:bg-red-950/40 rounded-full flex items-center justify-center mx-auto mb-5">
+                <AlertCircle className="w-8 h-8 text-red-500" />
+              </div>
+              <h3 className="font-bold text-xl text-center mb-2">Delete Medical Report?</h3>
+              <p className="text-muted-foreground text-sm text-center mb-2 leading-relaxed">
+                This report will be hidden from your view. If the patient has also deleted it, it will be <strong>permanently removed</strong> from the database.
+              </p>
+              <div className="flex gap-3 mt-6">
+                <Button variant="outline" className="flex-1 rounded-full" onClick={() => setDeleteReportId(null)}>Cancel</Button>
+                <Button className="flex-1 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg shadow-red-500/20"
+                  disabled={processing}
+                  onClick={async () => {
+                    if (!deleteReportId) return
+                    setProcessing(true)
+                    try {
+                      await secretarySoftDeleteReport({ reportId: deleteReportId })
+                      toast.success('Report deleted')
+                      setDeleteReportId(null)
+                    } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed') }
+                    finally { setProcessing(false) }
+                  }}
+                >
+                  {processing ? 'Deleting...' : 'Yes, Delete'}
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Confirmation Modal ─────────────────────────────────────────── */}
       <AnimatePresence>
@@ -733,6 +1082,69 @@ export default function SecretaryPage() {
               </div>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete cancelled appointment modal */}
+      <AnimatePresence>
+        {deleteApptId && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => !processing && setDeleteApptId(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.85, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.85, opacity: 0, y: 20 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              className="bg-card rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-border"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="w-16 h-16 bg-red-100 dark:bg-red-950/40 rounded-full flex items-center justify-center mx-auto mb-5">
+                <AlertCircle className="w-8 h-8 text-red-500" />
+              </div>
+              <h3 className="font-bold text-xl text-center mb-2">Delete Cancelled Appointment?</h3>
+              <p className="text-muted-foreground text-sm text-center mb-7 leading-relaxed">
+                This will remove the appointment from the doctor&apos;s dashboard and your view.
+                If the patient has already deleted it, it will be permanently removed from the database.
+              </p>
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1 rounded-full" onClick={() => setDeleteApptId(null)}>
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg shadow-red-500/20"
+                  disabled={processing}
+                  onClick={async () => {
+                    if (!deleteApptId) return
+                    setProcessing(true)
+                    try {
+                      await secretarySoftDelete({ appointmentId: deleteApptId })
+                      toast.success('Appointment deleted successfully')
+                      setDeleteApptId(null)
+                    } catch (e) {
+                      toast.error(e instanceof Error ? e.message : 'Failed to delete')
+                    } finally {
+                      setProcessing(false)
+                    }
+                  }}
+                >
+                  {processing ? 'Deleting...' : 'Yes, Delete'}
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ✨ Cancel Appointment Modal */}
+      <AnimatePresence>
+        {cancellingApt && (
+          <CancelAppointmentModal 
+            appointment={cancellingApt} 
+            onClose={() => setCancellingApt(null)}
+          />
         )}
       </AnimatePresence>
     </div>

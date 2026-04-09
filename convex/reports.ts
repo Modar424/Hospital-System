@@ -121,8 +121,11 @@ export const myReports = query({
             .order("desc")
             .collect();
 
+        // إخفاء التقارير التي حذفها المريض
+        const visible = reports.filter(r => !r.deletedByPatient);
+
         return Promise.all(
-            reports.map(async (report) => {
+            visible.map(async (report) => {
                 const doctor = report.doctorId ? await ctx.db.get(report.doctorId) : null;
                 const appointment = await ctx.db.get(report.appointmentId);
                 return { ...report, doctor, appointment };
@@ -181,8 +184,11 @@ export const allReports = query({
             .order("desc")
             .collect();
 
+        // إخفاء التقارير التي حذفتها السكرتيرة من واجهتها
+        const visible = reports.filter(r => !r.deletedBySecretary);
+
         return Promise.all(
-            reports.map(async (report) => {
+            visible.map(async (report) => {
                 const patient = await ctx.db.get(report.patientId);
                 const doctor = report.doctorId ? await ctx.db.get(report.doctorId) : null;
                 const appointment = await ctx.db.get(report.appointmentId);
@@ -263,5 +269,59 @@ export const deleteReport = mutation({
 
         // حذف التقرير
         await ctx.db.delete(args.reportId);
+    },
+});
+
+// ── نظام الحذف الذكي للتقارير (نفس منطق المواعيد) ──────────────────────
+// المريض يحذف التقرير من واجهته فقط
+export const patientSoftDeleteReport = mutation({
+    args: { reportId: v.id("reports") },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Unauthorized");
+
+        const patient = await ctx.db
+            .query("patients")
+            .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
+            .first();
+        if (!patient) throw new Error("User not found");
+
+        const report = await ctx.db.get(args.reportId);
+        if (!report) throw new Error("Report not found");
+        if (report.patientId !== patient._id) throw new Error("Unauthorized");
+
+        if (report.deletedBySecretary) {
+            // كلاهما حذف → حذف نهائي
+            await ctx.db.patch(report.appointmentId, { reportId: undefined });
+            await ctx.db.delete(args.reportId);
+        } else {
+            await ctx.db.patch(args.reportId, { deletedByPatient: true });
+        }
+    },
+});
+
+// السكرتيرة تحذف التقرير - يختفي من واجهتها
+export const secretarySoftDeleteReport = mutation({
+    args: { reportId: v.id("reports") },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Unauthorized");
+
+        const secretary = await ctx.db
+            .query("patients")
+            .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
+            .first();
+        if (!secretary || secretary.role !== "secretary") throw new Error("Unauthorized");
+
+        const report = await ctx.db.get(args.reportId);
+        if (!report) throw new Error("Report not found");
+
+        if (report.deletedByPatient) {
+            // كلاهما حذف → حذف نهائي
+            await ctx.db.patch(report.appointmentId, { reportId: undefined });
+            await ctx.db.delete(args.reportId);
+        } else {
+            await ctx.db.patch(args.reportId, { deletedBySecretary: true });
+        }
     },
 });
