@@ -73,13 +73,31 @@ try {
     console.error("Failed to fetch appointments for AI context", e);
 }
 
-        const systemPrompt = `You are a helpful medical assistant for MedCare Hospital.
-You can help users check their appointments, find doctors, and get general medical info.
-Important: You are not a doctor. Do not give medical diagnoses.
+        // 3. Fetch pharmacy data from pharmacy query
+        let pharmacyContext = "";
+        try {
+            const medications = await ctx.runQuery(api.pharmacy.get, {});
+            if (medications && medications.length > 0) {
+                pharmacyContext = "\nAvailable Medications in our Pharmacy:\n" + medications.map((med: any) => {
+                    const availability = med.available ? "✅ Available" : "❌ Out of Stock";
+                    const arabicName = med.nameAr ? ` (${med.nameAr})` : "";
+                    const category = med.category ? ` [${med.category}]` : "";
+                    return `- ${med.name}${arabicName}${category}: ${med.price} SAR — ${availability}${med.description ? ` — ${med.description}` : ""}`;
+                }).join("\n");
+            }
+        } catch (e) {
+            console.error("Failed to fetch pharmacy data for AI context", e);
+        }
+
+        const systemPrompt = `You are a helpful medical assistant for MedCare Hospital (HealWell).
+You can help users check their appointments, find doctors, get general medical info, and check medication availability and prices.
+Important: You are not a doctor. Do not give medical diagnoses. Always advise users to consult their doctor before taking any medication.
 If asked about appointments, you have access to their list below.
+If asked about medications, prices, or availability, use the pharmacy data below.
 Current user: ${identity.name || "Guest"}.
 
 ${appointmentContext}
+${pharmacyContext}
 `;
 
         const messages = [

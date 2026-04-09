@@ -12,9 +12,12 @@ import { Input } from '@/components/ui/input'
 import Link from 'next/link'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { useAuth } from '@clerk/nextjs'
+import { SignInButton } from '@clerk/nextjs'
 
 export default function DoctorProfilePage() {
   const params = useParams()
+  const { isSignedIn } = useAuth()
   const id = params.id as Id<"doctors">
   const doctor = useQuery(api.doctors.getDoctorById, { id })
   const createAppointment = useMutation(api.appointments.createAppointment)
@@ -157,39 +160,52 @@ export default function DoctorProfilePage() {
             <h2 className="font-semibold text-lg">Book Appointment</h2>
           </div>
 
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium text-muted-foreground mb-1.5 block">Select Date</label>
-              <Input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
-                className="border-border focus:border-primary"
-              />
+          {!isSignedIn ? (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground text-center">
+                Sign in to book an appointment with this doctor.
+              </p>
+              <SignInButton mode="modal">
+                <Button className="w-full bg-primary hover:bg-primary/90 text-white rounded-full py-2.5 font-medium shadow-md shadow-primary/20">
+                  Sign In to Book
+                </Button>
+              </SignInButton>
             </div>
-            <div>
-              <label className="text-sm font-medium text-muted-foreground mb-1.5 block">
-                Notes <span className="text-muted-foreground/60">(optional)</span>
-              </label>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Describe your symptoms..."
-                className="w-full min-h-25 resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none transition-colors placeholder:text-muted-foreground"
-              />
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-muted-foreground mb-1.5 block">Select Date</label>
+                <Input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                  className="border-border focus:border-primary"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-muted-foreground mb-1.5 block">
+                  Notes <span className="text-muted-foreground/60">(optional)</span>
+                </label>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Describe your symptoms..."
+                  className="w-full min-h-25 resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none transition-colors placeholder:text-muted-foreground"
+                />
+              </div>
+              <Button
+                onClick={handleBook}
+                disabled={!date || booking}
+                className="w-full bg-primary hover:bg-primary/90 text-white rounded-full py-2.5 font-medium shadow-md shadow-primary/20"
+              >
+                {booking ? 'Booking…' : 'Confirm Booking'}
+              </Button>
+              <p className="text-xs text-muted-foreground text-center">
+                You&apos;ll receive a confirmation email after booking
+              </p>
             </div>
-            <Button
-              onClick={handleBook}
-              disabled={!date || booking}
-              className="w-full bg-primary hover:bg-primary/90 text-white rounded-full py-2.5 font-medium shadow-md shadow-primary/20"
-            >
-              {booking ? 'Booking…' : 'Confirm Booking'}
-            </Button>
-            <p className="text-xs text-muted-foreground text-center">
-              You&apos;ll receive a confirmation email after booking
-            </p>
-          </div>
+          )}
         </motion.div>
       </div>
     </div>

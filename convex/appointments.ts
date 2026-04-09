@@ -13,12 +13,10 @@ export const createAppointment = mutation({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Unauthorized");
 
-        // تحقق أن التاريخ في المستقبل
         if (new Date(args.date).getTime() <= Date.now()) {
             throw new Error("Please select a future date");
         }
 
-        // ✅ تحقق من تعارض المواعيد
         if (args.doctorId) {
             const requestedTime = new Date(args.date).getTime();
             const existingAppts = await ctx.db
@@ -29,7 +27,7 @@ export const createAppointment = mutation({
             const conflict = existingAppts.find((apt) => {
                 if (apt.status === "cancelled") return false;
                 const diff = Math.abs(apt.date - requestedTime);
-                return diff < 30 * 60 * 1000; // 30 دقيقة
+                return diff < 30 * 60 * 1000;
             });
 
             if (conflict) {
@@ -37,7 +35,6 @@ export const createAppointment = mutation({
             }
         }
 
-        // الحصول على المريض أو إنشاؤه
         let patient = await ctx.db
             .query("patients")
             .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
@@ -84,7 +81,6 @@ export const updateStatus = mutation({
         const appointment = await ctx.db.get(args.appointmentId);
         if (!appointment) throw new Error("Appointment not found");
 
-        // ✅ حماية الـ backend: المريض يمكنه فقط إلغاء موعده، الأدمن يمكنه كل شيء
         const patient = await ctx.db
             .query("patients")
             .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
@@ -92,16 +88,25 @@ export const updateStatus = mutation({
 
         if (!patient) throw new Error("User not found");
 
-        const isAdmin = patient.role === "admin";
-        const isOwner = appointment.patientId === patient._id;
+        const isAdmin      = patient.role === "admin";
+        const isSecretary  = patient.role === "secretary";
+        const isOwner      = appointment.patientId === patient._id;
+        const isDoctor     = patient.role === "doctor" && appointment.doctorId === patient.doctorId;
 
-        if (!isAdmin && !isOwner) {
-            throw new Error("Unauthorized: You can only modify your own appointments");
+        // الأدمن والسكرتارية يستطيعان تغيير أي حالة
+        if (!isAdmin && !isSecretary && !isOwner && !isDoctor) {
+            throw new Error("Unauthorized");
         }
 
         // المريض العادي يمكنه فقط الإلغاء
-        if (!isAdmin && args.status !== "cancelled") {
-            throw new Error("Unauthorized: Patients can only cancel appointments");
+        // الدكتور يمكنه فقط تغيير الحالة إلى completed
+        if (!isAdmin && !isSecretary) {
+            if (isOwner && args.status !== "cancelled") {
+                throw new Error("Patients can only cancel appointments");
+            }
+            if (isDoctor && args.status !== "completed") {
+                throw new Error("Doctors can only mark appointments as completed");
+            }
         }
 
         await ctx.db.patch(args.appointmentId, { status: args.status });
@@ -125,31 +130,42 @@ export const updateStatus = mutation({
     },
 });
 
+// للأدمن والسكرتارية: كل المواعيد
 export const getAppointments = query({
     args: {},
     handler: async (ctx) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return [];
 
-        // ✅ التحقق من أن المستخدم أدمن
         const user = await ctx.db
             .query("patients")
             .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
             .first();
 
-        if (!user || user.role !== "admin") return [];
+        if (!user || (user.role !== "admin" && user.role !== "secretary")) return [];
 
         const appointments = await ctx.db.query("appointments").order("desc").collect();
         return Promise.all(
             appointments.map(async (appointment) => {
                 const doctor = appointment.doctorId ? await ctx.db.get(appointment.doctorId) : null;
                 const patient = await ctx.db.get(appointment.patientId);
-                return { ...appointment, doctor, patient };
+                // هل يوجد فاتورة لهذا الموعد؟
+                const invoice = await ctx.db
+                    .query("invoices")
+                    .withIndex("by_appointment", (q) => q.eq("appointmentId", appointment._id))
+                    .first();
+                // هل يوجد تقرير لهذا الموعد؟
+                const report = await ctx.db
+                    .query("reports")
+                    .withIndex("by_appointment", (q) => q.eq("appointmentId", appointment._id))
+                    .first();
+                return { ...appointment, doctor, patient, hasInvoice: !!invoice, hasReport: !!report };
             })
         );
     },
 });
 
+// للمريض: مواعيده الخاصة
 export const myAppointments = query({
     args: {},
     handler: async (ctx) => {
@@ -171,8 +187,66 @@ export const myAppointments = query({
         return Promise.all(
             appointments.map(async (app) => {
                 const doctor = app.doctorId ? await ctx.db.get(app.doctorId) : null;
-                return { ...app, doctor };
+                // هل يوجد تقرير لهذا الموعد؟
+                const report = await ctx.db
+                    .query("reports")
+                    .withIndex("by_appointment", (q) => q.eq("appointmentId", app._id))
+                    .first();
+                return { ...app, doctor, hasReport: !!report };
             })
         );
+    },
+});
+
+// للدكتور: مرضاه مع مواعيدهم
+export const getMyPatientsAppointments = query({
+    handler: async (ctx) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) return [];
+
+        const caller = await ctx.db
+            .query("patients")
+            .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
+            .unique();
+
+        if (!caller || caller.role !== "doctor") return [];
+
+        // الدكتور يحتاج doctorId لجلب مواعيده
+        if (!caller.doctorId) return [];
+
+        const appointments = await ctx.db
+            .query("appointments")
+            .withIndex("by_doctor", (q) => q.eq("doctorId", caller.doctorId))
+            .collect();
+
+        // تجميع حسب المريض
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const patientMap = new Map<string, any>();
+
+        for (const apt of appointments) {
+            const patient = await ctx.db.get(apt.patientId);
+            if (!patient) continue;
+
+            const key = apt.patientId.toString();
+            if (!patientMap.has(key)) {
+                patientMap.set(key, { patient, appointments: [] });
+            }
+
+            // هل يوجد فاتورة لهذا الموعد؟
+            const invoice = await ctx.db
+                .query("invoices")
+                .withIndex("by_appointment", (q) => q.eq("appointmentId", apt._id))
+                .first();
+
+            // هل يوجد تقرير لهذا الموعد؟
+            const report = await ctx.db
+                .query("reports")
+                .withIndex("by_appointment", (q) => q.eq("appointmentId", apt._id))
+                .first();
+
+            patientMap.get(key)!.appointments.push({ ...apt, hasInvoice: !!invoice, invoice, hasReport: !!report, report });
+        }
+
+        return Array.from(patientMap.values());
     },
 });

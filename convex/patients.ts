@@ -40,12 +40,17 @@ export const getUser = query({
     },
 });
 
-// ✅ setRole محمية: فقط أدمن يمكنه تغيير دور مستخدم آخر
-// الاستثناء الوحيد: bootstrapFirstAdmin لأول مستخدم
+// setRole: الأدمن يمكنه تعيين أي دور + ربط الدكتور بـ doctorId
 export const setRole = mutation({
     args: {
         userId: v.id("patients"),
-        role: v.union(v.literal("admin"), v.literal("guest")),
+        role: v.union(
+            v.literal("admin"),
+            v.literal("guest"),
+            v.literal("doctor"),
+            v.literal("secretary")
+        ),
+        doctorId: v.optional(v.id("doctors")),
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
@@ -60,11 +65,19 @@ export const setRole = mutation({
             throw new Error("Unauthorized: Only admins can change roles");
         }
 
-        await ctx.db.patch(args.userId, { role: args.role });
+        // عند تعيين دور doctor، يجب ربطه بسجل دكتور
+        if (args.role === "doctor" && args.doctorId) {
+            await ctx.db.patch(args.userId, { role: args.role, doctorId: args.doctorId });
+        } else if (args.role !== "doctor") {
+            // عند إزالة دور doctor، نزيل الربط
+            await ctx.db.patch(args.userId, { role: args.role, doctorId: undefined });
+        } else {
+            await ctx.db.patch(args.userId, { role: args.role });
+        }
     },
 });
 
-// ✅ Bootstrap: يجعل المستخدم الحالي أدمن — يعمل فقط إذا لم يكن هناك أدمن آخر
+// Bootstrap: يجعل المستخدم الحالي أدمن — يعمل فقط إذا لم يكن هناك أدمن آخر
 export const bootstrapAdmin = mutation({
     handler: async (ctx) => {
         const identity = await ctx.auth.getUserIdentity();
@@ -104,5 +117,52 @@ export const getAllUsers = query({
         if (!caller || caller.role !== "admin") return [];
 
         return await ctx.db.query("patients").collect();
+    },
+});
+
+export const getPatientStats = query({
+    handler: async (ctx) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) return null;
+
+        const caller = await ctx.db
+            .query("patients")
+            .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
+            .unique();
+
+        if (!caller || caller.role !== "admin") return null;
+
+        // احسب المرضى المسجلين (guests فقط)
+        const allGuestPatients = await ctx.db
+            .query("patients")
+            .withIndex("by_role", (q) => q.eq("role", "guest"))
+            .collect();
+
+        // احسب عدد المواعيد لكل يوم
+        const allAppointments = await ctx.db.query("appointments").collect();
+        const todayStr = new Date().toDateString();
+        
+        // احسب المرضى المختلفين اليوم
+        const todayPatientIds = new Set(
+            allAppointments
+                .filter(a => new Date(a.date).toDateString() === todayStr)
+                .map(a => a.patientId.toString())
+        );
+
+        // احسب المواعيد لكل حالة
+        const appointmentStats = {
+            pending: allAppointments.filter(a => a.status === 'pending').length,
+            confirmed: allAppointments.filter(a => a.status === 'confirmed').length,
+            completed: allAppointments.filter(a => a.status === 'completed').length,
+            cancelled: allAppointments.filter(a => a.status === 'cancelled').length,
+            total: allAppointments.length,
+        };
+
+        return {
+            totalPatients: allGuestPatients.length,
+            todayPatients: todayPatientIds.size,
+            todayAppointments: allAppointments.filter(a => new Date(a.date).toDateString() === todayStr).length,
+            appointmentStats,
+        };
     },
 });

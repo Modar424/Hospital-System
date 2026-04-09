@@ -17,6 +17,8 @@ import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useAuth } from "@clerk/nextjs";
+import { SignInButton } from "@clerk/nextjs";
 
 interface BookAppointmentModalProps {
     doctorId: Id<"doctors">;
@@ -25,6 +27,7 @@ interface BookAppointmentModalProps {
 }
 
 export function BookAppointmentModal({ doctorId, doctorName, department }: BookAppointmentModalProps) {
+    const { isSignedIn } = useAuth();
     const TIME_SLOTS = [
         "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
         "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
@@ -70,17 +73,25 @@ export function BookAppointmentModal({ doctorId, doctorName, department }: BookA
     };
 
     return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger>
-  <span className={cn(
-    "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
-    "bg-primary text-primary-foreground shadow hover:bg-primary/90",
-    "h-11 rounded-md px-8 text-lg flex-1 md:flex-none"
-  )}>
-    <CalendarIcon className="mr-2 w-5 h-5" /> Book Appointment
-  </span>
-</DialogTrigger>
-            <DialogContent className="sm:max-w-425px">
+        <>
+            {!isSignedIn ? (
+                <SignInButton mode="modal">
+                    <Button className="w-full bg-primary hover:bg-primary/90 text-white rounded-full text-sm transition-all duration-200 shadow-sm shadow-primary/20 hover:shadow-primary/40 hover:shadow-lg">
+                        {<CalendarIcon className="mr-2 w-4 h-4" />} Book Appointment
+                    </Button>
+                </SignInButton>
+            ) : (
+                <Dialog open={isOpen} onOpenChange={setIsOpen}>
+                    <DialogTrigger>
+                        <span className={cn(
+                            "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+                            "bg-primary text-primary-foreground shadow hover:bg-primary/90",
+                            "h-11 rounded-md px-8 text-lg flex-1 md:flex-none"
+                        )}>
+                            <CalendarIcon className="mr-2 w-5 h-5" /> Book Appointment
+                        </span>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-425px">
                 <DialogHeader>
                     <DialogTitle>Book Appointment</DialogTitle>
                     <DialogDescription>
@@ -139,7 +150,9 @@ export function BookAppointmentModal({ doctorId, doctorName, department }: BookA
                         Confirm Booking
                     </Button>
                 </DialogFooter>
-            </DialogContent>
-        </Dialog>
+                    </DialogContent>
+                </Dialog>
+            )}
+        </>
     );
 }

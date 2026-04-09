@@ -16,12 +16,13 @@ type Message = {
 }
 
 function AIChatSidebar() {
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
 
   const SUGGESTIONS = [
     t('chat_suggestion_appointments'),
     t('chat_suggestion_doctor'),
     t('chat_suggestion_hours'),
+    lang === 'ar' ? 'ما هي الأدوية المتوفرة الآن؟' : 'What medications are available?',
   ]
 
   const [isOpen, setIsOpen] = useState(false)

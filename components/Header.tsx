@@ -11,19 +11,39 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { LangToggle } from '@/components/LangToggle'
 import { useI18n } from '@/lib/i18n'
+import { useQuery } from 'convex/react'
+import { api } from '@/convex/_generated/api'
 
 const Header = () => {
   const { isSignedIn } = useAuth()
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
   const { t } = useI18n()
+  const currentUser = useQuery(api.patients.getUser)
 
-  const navLinks = [
+  const role = currentUser?.role
+
+  // Base nav links for everyone
+  const publicLinks = [
     { href: '/',            label: t('nav_home') },
     { href: '/all-doctors', label: t('nav_doctors') },
-    { href: '/appointments',label: t('nav_appointments') },
     { href: '/about',       label: t('nav_about') },
     { href: '/faq',         label: t('nav_faq') },
+  ]
+
+  // Role-specific dashboard link
+  const dashboardLink = (() => {
+    if (!isSignedIn || !role) return null
+    if (role === 'admin')     return { href: '/admin',     label: 'Admin Panel' }
+    if (role === 'doctor')    return { href: '/doctor',    label: 'My Dashboard' }
+    if (role === 'secretary') return { href: '/secretary', label: 'Secretary' }
+    // guest: show appointments
+    return { href: '/appointments', label: t('nav_appointments') }
+  })()
+
+  const navLinks = [
+    ...publicLinks,
+    ...(dashboardLink ? [dashboardLink] : []),
   ]
 
   return (

@@ -9,6 +9,7 @@ import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { useState } from 'react'
 import { useI18n } from '@/lib/i18n'
+import { BookAppointmentModal } from './BookAppointmentModal'
 
 interface DoctorCardProps {
   doctor: Doc<"doctors">
@@ -18,6 +19,7 @@ interface DoctorCardProps {
 function DoctorCard({ doctor, index = 0 }: DoctorCardProps) {
   const [imgError, setImgError] = useState(false)
   const [hovered, setHovered] = useState(false)
+  const [isBooking, setIsBooking] = useState(false)
   const { t } = useI18n()
 
   return (
@@ -134,13 +136,11 @@ function DoctorCard({ doctor, index = 0 }: DoctorCardProps) {
         </CardContent>
 
         <CardFooter className="p-4 pt-0">
-          <Link href={`/all-doctors/${doctor._id}`} className="w-full">
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
-              <Button className="w-full bg-primary hover:bg-primary/90 text-white rounded-full text-sm transition-all duration-200 shadow-sm shadow-primary/20 hover:shadow-primary/40 hover:shadow-lg">
-                {t('doctors_book')}
-              </Button>
-            </motion.div>
-          </Link>
+          <BookAppointmentModal 
+            doctorId={doctor._id} 
+            doctorName={doctor.name} 
+            department={doctor.category}
+          />
         </CardFooter>
       </Card>
     </motion.div>
