@@ -12,11 +12,12 @@ export default clerkMiddleware(async (auth, req) => {
 
   // ── Admin routes ──────────────────────────────────────────
   if (isAdminRoute(req)) {
-    const { userId, getToken } = await auth()
+    const { userId } = await auth()
     if (!userId) {
       return NextResponse.redirect(new URL('/?error=unauthenticated', req.url))
     }
-    const token = await getToken({ template: "convex" })
+    const authData = await auth()
+    const token = await authData.getToken({ template: "convex" })
     const user  = token ? await fetchQuery(api.patients.getUser, {}, { token }) : null
     if (!user || user.role !== "admin") {
       return NextResponse.redirect(new URL('/?error=unauthorized', req.url))
@@ -25,11 +26,12 @@ export default clerkMiddleware(async (auth, req) => {
 
   // ── Secretary routes ──────────────────────────────────────
   if (isSecretaryRoute(req)) {
-    const { userId, getToken } = await auth()
+    const { userId } = await auth()
     if (!userId) {
       return NextResponse.redirect(new URL('/?error=unauthenticated', req.url))
     }
-    const token = await getToken({ template: "convex" })
+    const authData = await auth()
+    const token = await authData.getToken({ template: "convex" })
     const user  = token ? await fetchQuery(api.patients.getUser, {}, { token }) : null
     if (!user || user.role !== "secretary") {
       return NextResponse.redirect(new URL('/?error=unauthorized', req.url))
@@ -38,11 +40,12 @@ export default clerkMiddleware(async (auth, req) => {
 
   // ── Doctor routes ─────────────────────────────────────────
   if (isDoctorRoute(req)) {
-    const { userId, getToken } = await auth()
+    const { userId } = await auth()
     if (!userId) {
       return NextResponse.redirect(new URL('/?error=unauthenticated', req.url))
     }
-    const token = await getToken({ template: "convex" })
+    const authData = await auth()
+    const token = await authData.getToken({ template: "convex" })
     const user  = token ? await fetchQuery(api.patients.getUser, {}, { token }) : null
     if (!user || user.role !== "doctor") {
       return NextResponse.redirect(new URL('/?error=unauthorized', req.url))

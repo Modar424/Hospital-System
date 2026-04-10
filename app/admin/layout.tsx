@@ -31,5 +31,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (!isAuthenticated || !user || user.role !== "admin") return null
 
-  return <>{children}</>
+  return (
+    <div className="min-h-screen">
+      {children}
+    </div>
+  )
 }

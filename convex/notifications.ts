@@ -1,5 +1,46 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, MutationCtx } from "./_generated/server";
+import { Id } from "./_generated/dataModel";
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🔔 BASE HELPERS - أدوات أساسية لكل الإشعارات
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+// ✅ Helper - إرسال إشعار واحد
+export async function sendNotification(
+  ctx: MutationCtx,
+  fromUserId: Id<"patients">,
+  toUserId: Id<"patients">,
+  type: "meeting_request" | "general" | "invoice_created" | "patient_message_to_secretary" | "secretary_message_to_patient" | "secretary_message_to_doctor" | "doctor_message_to_secretary" | "appointment_created" | "appointment_confirmed" | "appointment_cancelled" | "appointment_completed" | "report_created" | "report_available" | "role_assigned" | "promoted_to_admin" | "promoted_to_doctor" | "promoted_to_secretary" | "demoted",
+  message: string
+) {
+  return await ctx.db.insert("notifications", {
+    fromUserId,
+    toUserId,
+    type,
+    message,
+    isRead: false,
+  });
+}
+
+// ✅ Helper - إرسال لعدة أشخاص
+export async function sendNotificationToMany(
+  ctx: MutationCtx,
+  fromUserId: Id<"patients">,
+  toUserIds: Id<"patients">[],
+  type: "meeting_request" | "general" | "invoice_created" | "patient_message_to_secretary" | "secretary_message_to_patient" | "secretary_message_to_doctor" | "doctor_message_to_secretary" | "appointment_created" | "appointment_confirmed" | "appointment_cancelled" | "appointment_completed" | "report_created" | "report_available" | "role_assigned" | "promoted_to_admin" | "promoted_to_doctor" | "promoted_to_secretary" | "demoted",
+  message: string
+) {
+  return Promise.all(
+    toUserIds.map((toUserId) =>
+      sendNotification(ctx, fromUserId, toUserId, type, message)
+    )
+  );
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 📬 QUERIES & MUTATIONS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 // الأدمن يرسل إشعار لقاء للدكتور
 export const sendMeetingRequest = mutation({

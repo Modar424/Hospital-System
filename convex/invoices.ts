@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { internal } from "./_generated/api";
+import { notifyInvoiceCreated } from "./invoiceNotifications";
 
 // الدكتور ينشئ فاتورة - فقط للمواعيد المؤكدة والمنتهية
 export const createInvoice = mutation({
@@ -83,18 +83,17 @@ export const createInvoice = mutation({
             .withIndex("by_role", (q) => q.eq("role", "admin"))
             .collect();
 
-        const recipients = [...secretaries, ...admins];
+        const recipientIds = [...secretaries, ...admins].map((r) => r._id);
 
-        // إرسال إشعار لكل سكرتارية/مدير
-        for (const recipient of recipients) {
-            await ctx.db.insert("notifications", {
-                fromUserId: caller._id,
-                toUserId: recipient._id,
-                type: "general",
-                message: `فاتورة جديدة من د.${doctor?.name ?? caller.name} للمريض ${patient.name} - رقم الفاتورة: ${invoiceNumber}`,
-                isRead: false,
-            });
-        }
+        // إرسال إشعار الفاتورة الجديدة
+        await notifyInvoiceCreated(
+            ctx,
+            caller._id,
+            doctor?.name ?? caller.name,
+            patient.name,
+            invoiceNumber,
+            recipientIds
+        );
 
         return invoiceId;
     },

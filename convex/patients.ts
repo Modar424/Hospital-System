@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { notifyRoleAssigned, notifyPromotedToAdmin, notifyPromotedToDoctor, notifyPromotedToSecretary, notifyDemoted } from "./roleNotifications";
 
 export const createUser = mutation({
     args: {
@@ -65,6 +66,12 @@ export const setRole = mutation({
             throw new Error("Unauthorized: Only admins can change roles");
         }
 
+        // الحصول على بيانات المستخدم الحالية قبل التحديث
+        const targetUser = await ctx.db.get(args.userId);
+        if (!targetUser) throw new Error("User not found");
+
+        const previousRole = targetUser.role;
+
         // عند تعيين دور doctor، يجب ربطه بسجل دكتور
         if (args.role === "doctor" && args.doctorId) {
             await ctx.db.patch(args.userId, { role: args.role, doctorId: args.doctorId });
@@ -73,6 +80,21 @@ export const setRole = mutation({
             await ctx.db.patch(args.userId, { role: args.role, doctorId: undefined });
         } else {
             await ctx.db.patch(args.userId, { role: args.role });
+        }
+
+        // إرسال الإشعارات المناسبة حسب الدور الجديد
+        if (args.role === "admin") {
+            await notifyPromotedToAdmin(ctx, caller._id, args.userId, targetUser.name);
+        } else if (args.role === "doctor") {
+            await notifyPromotedToDoctor(ctx, caller._id, args.userId, targetUser.name);
+        } else if (args.role === "secretary") {
+            await notifyPromotedToSecretary(ctx, caller._id, args.userId, targetUser.name);
+        } else if (previousRole !== "guest" && args.role === "guest") {
+            // تراجع في الدور
+            await notifyDemoted(ctx, caller._id, args.userId, targetUser.name, previousRole);
+        } else {
+            // إشعار عام بتعيين الدور
+            await notifyRoleAssigned(ctx, caller._id, args.userId, targetUser.name, args.role as any);
         }
     },
 });

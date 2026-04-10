@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
+import { notifyReportCreated } from "./reportNotifications";
 
 // ==================== TYPES & INTERFACES ====================
 
@@ -117,18 +118,17 @@ export const createReport = mutation({
             .withIndex("by_role", (q) => q.eq("role", "admin"))
             .collect();
 
-        const recipients = [...secretaries, ...admins];
+        const recipientIds = [...secretaries, ...admins].map((r) => r._id);
 
-        // إرسال إشعار لكل سكرتارية/مدير
-        for (const recipient of recipients) {
-            await ctx.db.insert("notifications", {
-                fromUserId: caller._id,
-                toUserId: recipient._id,
-                type: "general",
-                message: `تقرير طبي جديد من د.${doctor?.name ?? caller.name} للمريض ${patient.name}`,
-                isRead: false,
-            });
-        }
+        // إرسال إشعار التقرير الجديد
+        await notifyReportCreated(
+            ctx,
+            caller._id,
+            doctor?.name ?? caller.name,
+            patient.name,
+            args.diagnosis,
+            recipientIds
+        );
 
         return reportId;
     },

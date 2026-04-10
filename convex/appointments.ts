@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { notifyAppointmentCreated, notifyAppointmentConfirmed, notifyAppointmentCancelled, notifyAppointmentCompleted } from "./appointmentNotifications";
 
 export const createAppointment = mutation({
     args: {
@@ -60,6 +61,24 @@ export const createAppointment = mutation({
             notes: args.notes,
         });
 
+        // البحث عن السكرتاريات لإرسال الإخطار
+        const secretaries = await ctx.db
+            .query("patients")
+            .withIndex("by_role", (q) => q.eq("role", "secretary"))
+            .collect();
+
+        const secretaryIds = secretaries.map((s) => s._id);
+
+        // إرسال إخطار بالموعد الجديد
+        await notifyAppointmentCreated(
+            ctx,
+            patient._id,
+            patient.name,
+            args.department,
+            new Date(args.date),
+            secretaryIds
+        );
+
         return appointmentId;
     },
 });
@@ -93,13 +112,12 @@ export const updateStatus = mutation({
         const isOwner      = appointment.patientId === patient._id;
         const isDoctor     = patient.role === "doctor" && appointment.doctorId === patient.doctorId;
 
-        // الأدمن والسكرتارية يستطيعان تغيير أي حالة
+
         if (!isAdmin && !isSecretary && !isOwner && !isDoctor) {
             throw new Error("Unauthorized");
         }
 
-        // المريض العادي يمكنه فقط الإلغاء
-        // الدكتور يمكنه فقط تغيير الحالة إلى completed
+       
         if (!isAdmin && !isSecretary) {
             if (isOwner && args.status !== "cancelled") {
                 throw new Error("Patients can only cancel appointments");
@@ -125,6 +143,57 @@ export const updateStatus = mutation({
                     date: new Date(appointment.date).toLocaleString(),
                     appointmentId: appointment._id,
                 });
+            }
+
+            // إرسال إخطار تأكيد الموعد
+            if (apptPatient && doctor) {
+                await notifyAppointmentConfirmed(
+                    ctx,
+                    patient._id,
+                    apptPatient._id,
+                    doctor.name,
+                    new Date(appointment.date),
+                    appointment.department
+                );
+            }
+        }
+
+        // إرسال إخطار إلغاء الموعد
+        if (args.status === "cancelled" && appointment.status !== "cancelled") {
+            const apptPatient = await ctx.db.get(appointment.patientId);
+
+            const secretaries = await ctx.db
+                .query("patients")
+                .withIndex("by_role", (q) => q.eq("role", "secretary"))
+                .collect();
+
+            const secretaryIds = secretaries.map((s) => s._id);
+
+            // تأكد من وجود سكرتاريات قبل الإرسال
+            if (apptPatient && secretaryIds.length > 0) {
+                await notifyAppointmentCancelled(
+                    ctx,
+                    patient._id,
+                    apptPatient.name,
+                    appointment.department,
+                    new Date(appointment.date),
+                    secretaryIds
+                );
+            }
+        }
+
+        // إرسال إخطار إكمال الموعد
+        if (args.status === "completed" && appointment.status !== "completed") {
+            const apptPatient = await ctx.db.get(appointment.patientId);
+
+            if (apptPatient && patient.role === "doctor") {
+                await notifyAppointmentCompleted(
+                    ctx,
+                    patient._id,
+                    apptPatient._id,
+                    patient.name,
+                    appointment.department
+                );
             }
         }
     },
@@ -219,7 +288,7 @@ export const getMyPatientsAppointments = query({
             .withIndex("by_doctor", (q) => q.eq("doctorId", caller.doctorId))
             .collect();
 
-        // تجميع حسب المريض
+        
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const patientMap = new Map<string, any>();
 

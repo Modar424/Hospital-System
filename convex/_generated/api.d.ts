@@ -9,15 +9,21 @@
  */
 
 import type * as actions from "../actions.js";
+import type * as appointmentNotifications from "../appointmentNotifications.js";
 import type * as appointments from "../appointments.js";
 import type * as categories from "../categories.js";
 import type * as doctors from "../doctors.js";
+import type * as invoiceNotifications from "../invoiceNotifications.js";
 import type * as invoices from "../invoices.js";
 import type * as migrations from "../migrations.js";
 import type * as notifications from "../notifications.js";
+import type * as patientSecretaryNotifications from "../patientSecretaryNotifications.js";
 import type * as patients from "../patients.js";
 import type * as pharmacy from "../pharmacy.js";
+import type * as reportNotifications from "../reportNotifications.js";
 import type * as reports from "../reports.js";
+import type * as roleNotifications from "../roleNotifications.js";
+import type * as secretaryDoctorNotifications from "../secretaryDoctorNotifications.js";
 import type * as stats from "../stats.js";
 
 import type {
@@ -28,15 +34,21 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   actions: typeof actions;
+  appointmentNotifications: typeof appointmentNotifications;
   appointments: typeof appointments;
   categories: typeof categories;
   doctors: typeof doctors;
+  invoiceNotifications: typeof invoiceNotifications;
   invoices: typeof invoices;
   migrations: typeof migrations;
   notifications: typeof notifications;
+  patientSecretaryNotifications: typeof patientSecretaryNotifications;
   patients: typeof patients;
   pharmacy: typeof pharmacy;
+  reportNotifications: typeof reportNotifications;
   reports: typeof reports;
+  roleNotifications: typeof roleNotifications;
+  secretaryDoctorNotifications: typeof secretaryDoctorNotifications;
   stats: typeof stats;
 }>;
 
