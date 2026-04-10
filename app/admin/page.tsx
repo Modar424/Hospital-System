@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
    Users, Stethoscope, TrendingUp, Clock,
   Plus, LayoutDashboard, ShieldCheck, Bell, Send,
-  UserCheck, X, CheckCircle2, Receipt, Trash2, AlertTriangle,
+  UserCheck, X, CheckCircle2,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -16,7 +16,7 @@ import { toast } from 'sonner'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 
-type NavItem = 'dashboard' | 'doctors' | 'users' | 'notify' | 'pharmacy' | 'invoices'
+type NavItem = 'dashboard' | 'doctors' | 'users' | 'notify' | 'pharmacy'
 type Role = 'admin' | 'guest' | 'doctor' | 'secretary'
 
 const roleConfig: Record<Role, { label: string; color: string }> = {
@@ -31,11 +31,9 @@ export default function AdminDashboardPage() {
   const doctors       = useQuery(api.doctors.getDoctors)
   const allUsers      = useQuery(api.patients.getAllUsers)
   const patientStats  = useQuery(api.patients.getPatientStats)
-  const pendingDeleteInvoices = useQuery(api.invoices.getPendingDeleteInvoices)
   const setRole       = useMutation(api.patients.setRole)
   const sendNotif     = useMutation(api.notifications.sendMeetingRequest)
   const setDoctorPass = useMutation(api.doctors.setDoctorPassword)
-  const approveDeleteInvoice = useMutation(api.invoices.adminApproveDeleteInvoice)
 
   const [activeNav,    setActiveNav]    = useState<NavItem>('dashboard')
   const [notifTarget,  setNotifTarget]  = useState<string>('')
@@ -73,7 +71,6 @@ export default function AdminDashboardPage() {
     { key: 'doctors',   label: 'Doctors',            icon: Stethoscope     },
     { key: 'users',     label: 'Users & Roles',      icon: ShieldCheck     },
     { key: 'notify',    label: 'Send Notification',  icon: Bell            },
-    { key: 'invoices',  label: 'Invoice Approval',   icon: Receipt         },
   ]
 
   const [doctorPickModal, setDoctorPickModal] = useState<{ userId: Id<"patients">; userName: string } | null>(null)
@@ -422,79 +419,6 @@ export default function AdminDashboardPage() {
                 {sending ? 'Sending...' : 'Send Notification'}
               </Button>
             </div>
-          </motion.div>
-        )}
-
-        {activeNav === 'invoices' && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <h1 className="text-2xl font-bold mb-2">Invoice Deletion Approval</h1>
-            <p className="text-muted-foreground text-sm mb-6">
-              These invoices have been marked for deletion by both the patient and secretary. Review and approve final deletion.
-            </p>
-
-            {pendingDeleteInvoices === undefined ? (
-              <div className="space-y-3">
-                {Array(3).fill(0).map((_, i) => <div key={i} className="h-24 rounded-2xl bg-muted animate-pulse" />)}
-              </div>
-            ) : pendingDeleteInvoices.length === 0 ? (
-              <div className="text-center py-20 border border-border rounded-2xl bg-card">
-                <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-teal-500 opacity-60" />
-                <p className="font-medium text-foreground">No pending invoice deletions</p>
-                <p className="text-sm text-muted-foreground mt-1">All invoices are up to date</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {pendingDeleteInvoices.map(inv => (
-                  <div key={inv._id} className="bg-card border border-amber-200 dark:border-amber-800 rounded-2xl p-5">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-start gap-4">
-                        <div className="w-11 h-11 bg-amber-100 dark:bg-amber-950/40 rounded-xl flex items-center justify-center shrink-0">
-                          <AlertTriangle className="w-5 h-5 text-amber-600" />
-                        </div>
-                        <div>
-                          <div className="font-semibold text-base">{inv.invoiceNumber}</div>
-                          <div className="text-sm text-muted-foreground mt-0.5">
-                            Patient: <span className="text-foreground font-medium">{inv.patientName}</span>
-                            {' · '}
-                            Doctor: <span className="text-foreground font-medium">{inv.doctorName}</span>
-                          </div>
-                          <div className="text-sm text-muted-foreground mt-0.5">
-                            Fees: <span className="text-foreground font-medium">{inv.doctorFees} SAR</span>
-                            {' · '}
-                            Status: <span className={inv.status === 'paid' ? 'text-teal-600 font-medium' : 'text-amber-600 font-medium'}>
-                              {inv.status === 'paid' ? 'Paid' : 'Pending Payment'}
-                            </span>
-                          </div>
-                          <div className="flex gap-2 mt-2">
-                            <span className="text-xs bg-red-50 dark:bg-red-950/30 text-red-600 border border-red-200 dark:border-red-800 px-2 py-0.5 rounded-full">
-                              Deleted by patient
-                            </span>
-                            <span className="text-xs bg-red-50 dark:bg-red-950/30 text-red-600 border border-red-200 dark:border-red-800 px-2 py-0.5 rounded-full">
-                              Deleted by secretary
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <Button
-                        size="sm"
-                        className="bg-red-500 hover:bg-red-600 text-white rounded-full gap-1.5 text-xs shadow-lg shadow-red-500/20 shrink-0"
-                        onClick={async () => {
-                          try {
-                            await approveDeleteInvoice({ invoiceId: inv._id })
-                            toast.success('Invoice permanently deleted')
-                          } catch (e) {
-                            toast.error(e instanceof Error ? e.message : 'Failed')
-                          }
-                        }}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        Approve & Delete
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </motion.div>
         )}
 

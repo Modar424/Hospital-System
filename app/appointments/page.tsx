@@ -7,15 +7,12 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Calendar, Clock, User, Stethoscope, AlertCircle,
   CheckCircle2, XCircle, Hourglass, PlusCircle, MapPin, FileText,
-  Receipt, Download, CreditCard, ChevronRight, Trash2, X, Send,
-  ClipboardList, Heart, Baby, Shield, Loader2
+  Receipt, Download, CreditCard, ChevronRight
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import Link from 'next/link'
 import { useI18n } from '@/lib/i18n'
 import { useAuth } from '@clerk/nextjs'
@@ -303,279 +300,29 @@ function InvoiceCard({ invoice, lang }: { invoice: InvoiceData; lang: string }) 
   )
 }
 
-// ── Profile Completion Wall ────────────────────────────────────────────────
-function ProfileCompletionWall({ lang, currentUser }: { lang: string; currentUser: { _id: string; name: string; email: string } }) {
-  const updateProfile = useMutation(api.patients.updatePatientProfile)
-  const [fullName, setFullName] = useState('')
-  const [age, setAge] = useState('')
-  const [dateOfBirth, setDateOfBirth] = useState('')
-  const [hasChronicDisease, setHasChronicDisease] = useState(false)
-  const [chronicDiseases, setChronicDiseases] = useState('')
-  const [saving, setSaving] = useState(false)
-
-  const handleSubmit = async () => {
-    if (!fullName.trim() || !age || !dateOfBirth) {
-      toast.error(lang === 'ar' ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields')
-      return
-    }
-    setSaving(true)
-    try {
-      await updateProfile({
-        fullName: fullName.trim(),
-        age: parseInt(age),
-        dateOfBirth,
-        hasChronicDisease,
-        chronicDiseases: hasChronicDisease ? chronicDiseases : undefined,
-      })
-      toast.success(lang === 'ar' ? 'تم حفظ بياناتك بنجاح!' : 'Profile saved successfully!')
-    } catch {
-      toast.error(lang === 'ar' ? 'فشل حفظ البيانات' : 'Failed to save profile')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-lg"
-      >
-        <div className="text-center mb-8">
-          <motion.div
-            animate={{ y: [0, -6, 0] }}
-            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-            className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary/10"
-          >
-            <ClipboardList className="w-10 h-10 text-primary" />
-          </motion.div>
-          <h2 className="text-2xl font-bold mb-2">
-            {lang === 'ar' ? 'أكمل ملفك الشخصي أولاً' : 'Complete Your Profile First'}
-          </h2>
-          <p className="text-muted-foreground text-sm">
-            {lang === 'ar'
-              ? 'يجب إكمال بياناتك الشخصية قبل حجز أي موعد أو الوصول إلى مواعيدك'
-              : 'You must complete your personal information before booking or viewing appointments'}
-          </p>
-        </div>
-
-        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-5">
-          {/* Full Name */}
-          <div className="space-y-1.5">
-            <Label className="text-sm font-medium flex items-center gap-2">
-              <User className="w-3.5 h-3.5 text-primary" />
-              {lang === 'ar' ? 'الاسم الثلاثي *' : 'Full Name (3 parts) *'}
-            </Label>
-            <Input
-              value={fullName}
-              onChange={e => setFullName(e.target.value)}
-              placeholder={lang === 'ar' ? 'محمد أحمد العلي' : 'John Michael Smith'}
-              className="rounded-xl"
-            />
-          </div>
-
-          {/* Age */}
-          <div className="space-y-1.5">
-            <Label className="text-sm font-medium flex items-center gap-2">
-              <Baby className="w-3.5 h-3.5 text-primary" />
-              {lang === 'ar' ? 'العمر *' : 'Age *'}
-            </Label>
-            <Input
-              type="number"
-              min={1}
-              max={120}
-              value={age}
-              onChange={e => setAge(e.target.value)}
-              placeholder={lang === 'ar' ? 'مثال: 30' : 'e.g. 30'}
-              className="rounded-xl"
-            />
-          </div>
-
-          {/* Date of Birth */}
-          <div className="space-y-1.5">
-            <Label className="text-sm font-medium flex items-center gap-2">
-              <Calendar className="w-3.5 h-3.5 text-primary" />
-              {lang === 'ar' ? 'تاريخ الميلاد *' : 'Date of Birth *'}
-            </Label>
-            <Input
-              type="date"
-              value={dateOfBirth}
-              onChange={e => setDateOfBirth(e.target.value)}
-              className="rounded-xl"
-            />
-          </div>
-
-          {/* Chronic Disease */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium flex items-center gap-2">
-              <Heart className="w-3.5 h-3.5 text-primary" />
-              {lang === 'ar' ? 'هل تعاني من أمراض مزمنة؟' : 'Do you have chronic diseases?'}
-            </Label>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setHasChronicDisease(true)}
-                className={`flex-1 py-2.5 rounded-xl border text-sm font-medium transition-all ${
-                  hasChronicDisease
-                    ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
-                    : 'bg-muted/40 text-muted-foreground border-border hover:border-primary/40'
-                }`}
-              >
-                {lang === 'ar' ? 'نعم' : 'Yes'}
-              </button>
-              <button
-                onClick={() => setHasChronicDisease(false)}
-                className={`flex-1 py-2.5 rounded-xl border text-sm font-medium transition-all ${
-                  !hasChronicDisease
-                    ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
-                    : 'bg-muted/40 text-muted-foreground border-border hover:border-primary/40'
-                }`}
-              >
-                {lang === 'ar' ? 'لا' : 'No'}
-              </button>
-            </div>
-            {hasChronicDisease && (
-              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
-                <Input
-                  value={chronicDiseases}
-                  onChange={e => setChronicDiseases(e.target.value)}
-                  placeholder={lang === 'ar' ? 'مثال: سكري، ضغط الدم، ربو...' : 'e.g. Diabetes, Hypertension, Asthma...'}
-                  className="rounded-xl mt-2"
-                />
-              </motion.div>
-            )}
-          </div>
-
-          <Button
-            onClick={handleSubmit}
-            disabled={saving}
-            className="w-full rounded-xl bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 h-11"
-          >
-            {saving
-              ? (lang === 'ar' ? 'جارٍ الحفظ...' : 'Saving...')
-              : (lang === 'ar' ? 'حفظ البيانات والمتابعة' : 'Save & Continue')}
-          </Button>
-        </div>
-      </motion.div>
-    </div>
-  )
-}
-
-// ── Patient File Card ──────────────────────────────────────────────────────
-function PatientFileCard({ patient, lang }: { patient: { _id: string; name: string; email: string; fullName?: string; age?: number; dateOfBirth?: string; hasChronicDisease?: boolean; chronicDiseases?: string }, lang: string }) {
-  const [open, setOpen] = useState(false)
-  const shortId = patient._id.toString().slice(-8).toUpperCase()
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-card border border-border rounded-2xl overflow-hidden hover:shadow-md hover:border-primary/20 transition-all"
-    >
-      <div className="h-1 w-full bg-linear-to-r from-primary to-teal-400" />
-      <div className="p-5">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center shrink-0">
-              <Shield className="w-6 h-6 text-primary" />
-            </div>
-            <div>
-              <div className="font-bold text-base">{patient.fullName || patient.name}</div>
-              <div className="text-xs text-muted-foreground mt-0.5 font-mono">
-                ID: {shortId}
-              </div>
-            </div>
-          </div>
-          <button
-            onClick={() => setOpen(!open)}
-            className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 font-medium transition-colors"
-          >
-            <ChevronRight className={`w-3.5 h-3.5 transition-transform ${open ? 'rotate-90' : ''}`} />
-            {open ? (lang === 'ar' ? 'إخفاء' : 'Hide') : (lang === 'ar' ? 'عرض الملف' : 'View File')}
-          </button>
-        </div>
-
-        <AnimatePresence>
-          {open && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="overflow-hidden"
-            >
-              <div className="mt-4 pt-4 border-t border-border grid grid-cols-2 gap-3 text-sm">
-                <div className="bg-muted/40 rounded-xl p-3">
-                  <div className="text-xs text-muted-foreground mb-1">{lang === 'ar' ? 'الاسم الكامل' : 'Full Name'}</div>
-                  <div className="font-medium">{patient.fullName || '—'}</div>
-                </div>
-                <div className="bg-muted/40 rounded-xl p-3">
-                  <div className="text-xs text-muted-foreground mb-1">{lang === 'ar' ? 'العمر' : 'Age'}</div>
-                  <div className="font-medium">{patient.age ?? '—'}</div>
-                </div>
-                <div className="bg-muted/40 rounded-xl p-3">
-                  <div className="text-xs text-muted-foreground mb-1">{lang === 'ar' ? 'تاريخ الميلاد' : 'Date of Birth'}</div>
-                  <div className="font-medium">{patient.dateOfBirth || '—'}</div>
-                </div>
-                <div className="bg-muted/40 rounded-xl p-3">
-                  <div className="text-xs text-muted-foreground mb-1">{lang === 'ar' ? 'البريد الإلكتروني' : 'Email'}</div>
-                  <div className="font-medium text-xs truncate">{patient.email}</div>
-                </div>
-                <div className="col-span-2 bg-muted/40 rounded-xl p-3">
-                  <div className="text-xs text-muted-foreground mb-1">{lang === 'ar' ? 'أمراض مزمنة' : 'Chronic Diseases'}</div>
-                  <div className="font-medium">
-                    {patient.hasChronicDisease
-                      ? (patient.chronicDiseases || (lang === 'ar' ? 'نعم (غير محدد)' : 'Yes (unspecified)'))
-                      : (lang === 'ar' ? 'لا يوجد' : 'None')}
-                  </div>
-                </div>
-                <div className="col-span-2 bg-primary/5 border border-primary/20 rounded-xl p-3">
-                  <div className="text-xs text-muted-foreground mb-1">{lang === 'ar' ? 'رقم المريض' : 'Patient ID'}</div>
-                  <div className="font-mono font-bold text-primary">{patient._id}</div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </motion.div>
-  )
-}
-
 // ── Main page ──────────────────────────────────────────────────────────────
 export default function AppointmentsPage() {
   const { isSignedIn } = useAuth()
-  const currentUser  = useQuery(api.patients.getUser)
   const appointments = useQuery(api.appointments.myAppointments)
   const invoices     = useQuery(api.invoices.myInvoices)
   const updateStatus = useMutation(api.appointments.updateStatus)
-  const cancelAppt   = useMutation(api.appointments.cancelAppointmentWithNotification)
-  const patientSoftDelete = useMutation(api.appointments.patientSoftDelete)
 
   const [cancelId,    setCancelId]   = useState<Id<"appointments"> | null>(null)
-  const [cancelReason, setCancelReason] = useState('')
   const [cancelling,  setCancelling] = useState(false)
-  const [deleteId,    setDeleteId]   = useState<Id<"appointments"> | null>(null)
-  const [deleting,    setDeleting]   = useState(false)
   const [filter,      setFilter]     = useState<'all' | 'pending' | 'confirmed' | 'completed' | 'cancelled'>('all')
-  const [activeTab,   setActiveTab]  = useState<'appointments' | 'invoices' | 'myfile'>('appointments')
+  const [activeTab,   setActiveTab]  = useState<'appointments' | 'invoices'>('appointments')
   const { lang } = useI18n()
 
   // Show login wall for guests
   if (!isSignedIn) return <LoginWall lang={lang} />
 
-  // Show profile completion wall for patients who haven't completed their profile
-  if (currentUser !== undefined && currentUser && currentUser.role === 'guest' && !currentUser.profileCompleted) {
-    return <ProfileCompletionWall lang={lang} currentUser={currentUser} />
-  }
-
   const handleCancel = async () => {
     if (!cancelId) return
     setCancelling(true)
     try {
-      await cancelAppt({ appointmentId: cancelId, reason: cancelReason })
+      await updateStatus({ appointmentId: cancelId, status: 'cancelled' })
       toast.success(lang === 'ar' ? 'تم إلغاء الموعد' : 'Appointment cancelled')
       setCancelId(null)
-      setCancelReason('')
     } catch {
       toast.error(lang === 'ar' ? 'فشل الإلغاء' : 'Failed to cancel')
     } finally {
@@ -583,21 +330,7 @@ export default function AppointmentsPage() {
     }
   }
 
-  const handleDelete = async () => {
-    if (!deleteId) return
-    setDeleting(true)
-    try {
-      await patientSoftDelete({ appointmentId: deleteId })
-      toast.success(lang === 'ar' ? 'تم حذف الموعد من قائمتك' : 'Appointment removed from your list')
-      setDeleteId(null)
-    } catch {
-      toast.error(lang === 'ar' ? 'فشل الحذف' : 'Failed to delete')
-    } finally {
-      setDeleting(false)
-    }
-  }
-
-    const filtered = appointments?.filter(a => filter === 'all' || a.status === filter)
+  const filtered = appointments?.filter(a => filter === 'all' || a.status === filter)
 
   const counts = {
     all:       appointments?.length ?? 0,
@@ -697,17 +430,6 @@ export default function AppointmentsPage() {
                 {invoices?.length}
               </span>
             )}
-          </button>
-          <button
-            onClick={() => setActiveTab('myfile')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
-              activeTab === 'myfile'
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <Shield className="w-4 h-4" />
-            {lang === 'ar' ? 'ملفي' : 'My File'}
           </button>
         </motion.div>
 
@@ -861,17 +583,6 @@ export default function AppointmentsPage() {
                                   {lang === 'ar' ? 'إلغاء' : 'Cancel'}
                                 </motion.button>
                               )}
-                              {apt.status === 'cancelled' && (
-                                <motion.button
-                                  whileHover={{ scale: 1.04 }}
-                                  whileTap={{ scale: 0.96 }}
-                                  onClick={() => setDeleteId(apt._id)}
-                                  className="text-xs text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 hover:border-red-200 transition-colors font-medium flex items-center gap-1"
-                                >
-                                  <Trash2 className="w-3 h-3" />
-                                  {lang === 'ar' ? 'حذف من قائمتي' : 'Remove'}
-                                </motion.button>
-                              )}
                             </div>
                           </div>
                         </motion.div>
@@ -920,25 +631,6 @@ export default function AppointmentsPage() {
             </motion.div>
           </AnimatePresence>
         )}
-
-        {/* ── MY FILE TAB ───────────────────────────────────────────── */}
-        {activeTab === 'myfile' && (
-          <AnimatePresence mode="wait">
-            <motion.div key="myfile-tab" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}>
-              {currentUser === undefined ? (
-                <div className="h-40 rounded-2xl bg-muted animate-pulse" />
-              ) : currentUser ? (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                    <Shield className="w-4 h-4 text-primary" />
-                    {lang === 'ar' ? 'ملفك الشخصي — يظهر هذا الملف للطبيب والسكرتيرة عند البحث عنك' : 'Your patient file — visible to your doctor and secretary when they look you up'}
-                  </div>
-                  <PatientFileCard patient={currentUser} lang={lang} />
-                </div>
-              ) : null}
-            </motion.div>
-          </AnimatePresence>
-        )}
       </div>
 
       {/* Cancel modal */}
@@ -949,7 +641,7 @@ export default function AppointmentsPage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={() => { setCancelId(null); setCancelReason('') }}
+            onClick={() => setCancelId(null)}
           >
             <motion.div
               initial={{ scale: 0.85, opacity: 0, y: 20 }}
@@ -968,99 +660,23 @@ export default function AppointmentsPage() {
                 <AlertCircle className="w-8 h-8 text-red-500" />
               </motion.div>
               <h3 className="font-bold text-xl text-center mb-2">
-                {lang === 'ar' ? 'إلغاء الموعد' : 'Cancel Appointment'}
-              </h3>
-              <p className="text-muted-foreground text-sm text-center mb-5 leading-relaxed">
-                {lang === 'ar'
-                  ? 'هل تريد إلغاء هذا الموعد؟ يمكنك إضافة سبب اختياري.'
-                  : 'Do you want to cancel this appointment? You can add an optional reason.'}
-              </p>
-              
-              {/* Reason input */}
-              <div className="mb-6 space-y-2">
-                <Label className="text-sm font-medium flex items-center gap-2">
-                  {lang === 'ar' ? '📝 السبب (اختياري)' : '📝 Reason (Optional)'}
-                </Label>
-                <textarea
-                  value={cancelReason}
-                  onChange={e => setCancelReason(e.target.value)}
-                  placeholder={lang === 'ar' ? 'شرح السبب...' : 'Explain your reason...'}
-                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary resize-none"
-                  rows={3}
-                />
-              </div>
-              
-              <div className="flex gap-3">
-                <Button variant="outline" className="flex-1 rounded-full" onClick={() => { setCancelId(null); setCancelReason('') }}>
-                  {lang === 'ar' ? 'احتفظ به' : 'Keep it'}
-                </Button>
-                <Button
-                  className="flex-1 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg shadow-red-500/20 gap-1.5"
-                  onClick={handleCancel}
-                  disabled={cancelling}
-                >
-                  {cancelling ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      {lang === 'ar' ? 'جارٍ...' : 'Cancelling...'}
-                    </>
-                  ) : (
-                    <>
-                      <X className="w-4 h-4" />
-                      {lang === 'ar' ? 'نعم، إلغاء' : 'Yes, Cancel'}
-                    </>
-                  )}
-                </Button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Delete modal - for cancelled appointments */}
-      <AnimatePresence>
-        {deleteId && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={() => setDeleteId(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.85, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.85, opacity: 0, y: 20 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-              className="bg-card rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-border"
-              onClick={e => e.stopPropagation()}
-            >
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.1, type: 'spring' }}
-                className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-5"
-              >
-                <Trash2 className="w-8 h-8 text-slate-500" />
-              </motion.div>
-              <h3 className="font-bold text-xl text-center mb-2">
-                {lang === 'ar' ? 'حذف الموعد من قائمتك؟' : 'Remove from your list?'}
+                {lang === 'ar' ? 'إلغاء الموعد؟' : 'Cancel Appointment?'}
               </h3>
               <p className="text-muted-foreground text-sm text-center mb-7 leading-relaxed">
                 {lang === 'ar'
-                  ? 'سيختفي هذا الموعد من قائمتك فقط. لن يتأثر سجل المستشفى.' 
-                  : 'This appointment will be removed from your list only. Hospital records are not affected.'}
+                  ? 'هل أنت متأكد من إلغاء هذا الموعد؟ لا يمكن التراجع عن هذا الإجراء.'
+                  : 'Are you sure you want to cancel this appointment? This action cannot be undone.'}
               </p>
               <div className="flex gap-3">
-                <Button variant="outline" className="flex-1 rounded-full" onClick={() => setDeleteId(null)}>
-                  {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+                <Button variant="outline" className="flex-1 rounded-full" onClick={() => setCancelId(null)}>
+                  {lang === 'ar' ? 'احتفظ به' : 'Keep it'}
                 </Button>
                 <Button
-                  className="flex-1 bg-slate-600 hover:bg-slate-700 text-white rounded-full"
-                  onClick={handleDelete}
-                  disabled={deleting}
+                  className="flex-1 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg shadow-red-500/20"
+                  onClick={handleCancel}
+                  disabled={cancelling}
                 >
-                  {deleting ? (lang === 'ar' ? 'جارٍ...' : 'Removing...') : (lang === 'ar' ? 'نعم، احذف' : 'Yes, Remove')}
+                  {cancelling ? (lang === 'ar' ? 'جارٍ...' : 'Cancelling...') : (lang === 'ar' ? 'نعم، إلغاء' : 'Yes, Cancel')}
                 </Button>
               </div>
             </motion.div>

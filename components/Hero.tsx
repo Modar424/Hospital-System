@@ -33,7 +33,6 @@ type FormData = {
 const Hero = () => {
   const { t } = useI18n()
   const { isSignedIn } = useUser()
-  const currentUser = useQuery(api.patients.getUser)
   const createAppointment = useMutation(api.appointments.createAppointment)
   const categories = useQuery(api.categories.get)
 
@@ -186,15 +185,6 @@ const Hero = () => {
                     {t('nav_signin')}
                   </Button>
                 </SignInButton>
-              </div>
-            ) : currentUser && currentUser.role === 'guest' && !currentUser.profileCompleted ? (
-              <div className="text-center space-y-4 py-4">
-                <p className="text-muted-foreground text-sm">Please complete your profile before booking an appointment.</p>
-                <Link href="/appointments">
-                  <Button className="w-full bg-amber-500 hover:bg-amber-600 text-white rounded-full">
-                    Complete Profile to Book
-                  </Button>
-                </Link>
               </div>
             ) : (
               <Form {...form}>

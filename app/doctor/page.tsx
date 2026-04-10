@@ -227,69 +227,6 @@ function InvoiceModal({ appointment, patientName, onClose }: { appointment: Appo
   )
 }
 
-// ── View Report Modal (Display existing reports) ─────────────────────────────
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function ViewReportModal({ report, onClose }: { report: any; onClose: () => void }) {
-  if (!report) return null
-
-  return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.9, opacity: 0, y: 20 }}
-        className="bg-card rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-border max-h-[90vh] overflow-y-auto"
-        onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-100 dark:bg-green-900/40 rounded-xl flex items-center justify-center">
-              <FileText className="w-5 h-5 text-green-600" />
-            </div>
-            <div>
-              <h3 className="font-bold text-lg">Medical Report</h3>
-              <p className="text-xs text-muted-foreground">{report.patientName} · Dr. {report.doctorName}</p>
-            </div>
-          </div>
-          <button onClick={onClose} className="p-2 hover:bg-muted rounded-lg"><X className="w-4 h-4" /></button>
-        </div>
-        <div className="space-y-4">
-          <div>
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Diagnosis</label>
-            <p className="text-sm mt-1.5 leading-relaxed">{report.diagnosis}</p>
-          </div>
-          {report.medications && report.medications.length > 0 && (
-            <div>
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Medications</label>
-              <div className="space-y-2 mt-2">
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                {report.medications.map((med: any, i: number) => (
-                  <div key={i} className="text-sm bg-muted/50 p-3 rounded-lg border border-border/50">
-                    <div className="font-medium text-foreground">{med.name}</div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {med.dosage && <span>Dosage: {med.dosage}</span>}
-                      {med.dosage && med.frequency && <span> • </span>}
-                      {med.frequency && <span>Frequency: {med.frequency}</span>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          {report.notes && (
-            <div>
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Notes</label>
-              <p className="text-sm mt-1.5 leading-relaxed text-muted-foreground">{report.notes}</p>
-            </div>
-          )}
-          <div className="flex items-center justify-between pt-2 mt-4 border-t border-border/50">
-            <span className="text-xs text-muted-foreground">Report created:</span>
-            <span className="text-xs font-medium text-foreground">{new Date(report.createdAt).toLocaleString()}</span>
-          </div>
-        </div>
-      </motion.div>
-    </motion.div>
-  )
-}
-
 // ── Report Modal ───────────────────────────────────────────────────────────
 function ReportModal({ appointment, patientName, onClose }: { appointment: Appointment; patientName: string; onClose: () => void }) {
   const createReport = useMutation(api.reports.createReport)
@@ -450,22 +387,12 @@ function PatientCard({ group }: { group: { patient: Patient; appointments: Appoi
   const [expanded, setExpanded] = useState(false)
   const [invoiceApt, setInvoiceApt] = useState<Appointment | null>(null)
   const [reportApt, setReportApt] = useState<Appointment | null>(null)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [viewingReport, setViewingReport] = useState<any>(null)
 
   const pending   = group.appointments.filter(a => a.status === 'pending')
   const confirmed = group.appointments.filter(a => a.status === 'confirmed')
   const completed = group.appointments.filter(a => a.status === 'completed')
   const cancelled = group.appointments.filter(a => a.status === 'cancelled')
   const activeCount = pending.length + confirmed.length
-
-  // جمع جميع التقارير من جميع المواعيد
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const allReports: any[] = group.appointments
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .filter(apt => (apt as any).report)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .map(apt => (apt as any).report)
 
   return (
     <>
@@ -495,34 +422,6 @@ function PatientCard({ group }: { group: { patient: Patient; appointments: Appoi
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
                 <div className="mt-4 pt-4 border-t border-border space-y-4">
-                  {/* Patient File */}
-                  <div className="grid grid-cols-2 gap-2 p-3 bg-primary/5 border border-primary/20 rounded-xl">
-                    <div className="col-span-2 text-xs font-semibold text-primary uppercase tracking-wide mb-1">Patient File</div>
-                    <div className="bg-background/60 rounded-lg p-2">
-                      <div className="text-xs text-muted-foreground">Full Name</div>
-                      <div className="font-medium text-sm">{(group.patient as {fullName?: string; name: string}).fullName || group.patient.name}</div>
-                    </div>
-                    <div className="bg-background/60 rounded-lg p-2">
-                      <div className="text-xs text-muted-foreground">Age</div>
-                      <div className="font-medium text-sm">{(group.patient as {age?: number}).age ?? '—'}</div>
-                    </div>
-                    <div className="bg-background/60 rounded-lg p-2">
-                      <div className="text-xs text-muted-foreground">Date of Birth</div>
-                      <div className="font-medium text-sm">{(group.patient as {dateOfBirth?: string}).dateOfBirth || '—'}</div>
-                    </div>
-                    <div className="bg-background/60 rounded-lg p-2">
-                      <div className="text-xs text-muted-foreground">Chronic Diseases</div>
-                      <div className="font-medium text-sm">
-                        {(group.patient as {hasChronicDisease?: boolean; chronicDiseases?: string}).hasChronicDisease
-                          ? ((group.patient as {chronicDiseases?: string}).chronicDiseases || 'Yes')
-                          : 'None'}
-                      </div>
-                    </div>
-                    <div className="col-span-2 bg-background/60 rounded-lg p-2">
-                      <div className="text-xs text-muted-foreground mb-0.5">Patient ID</div>
-                      <div className="font-mono text-xs font-bold text-primary break-all">{group.patient._id}</div>
-                    </div>
-                  </div>
                   {pending.length > 0 && (
                     <div>
                       <div className="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-2 flex items-center gap-1.5">
@@ -555,30 +454,6 @@ function PatientCard({ group }: { group: { patient: Patient; appointments: Appoi
                       <div className="space-y-2">{cancelled.map(apt => <AppointmentItem key={apt._id} apt={apt} onCreateInvoice={() => setInvoiceApt(apt)} onCreateReport={() => setReportApt(apt)} />)}</div>
                     </div>
                   )}
-                  {allReports.length > 0 && (
-                    <div>
-                      <div className="text-xs font-semibold text-green-600 uppercase tracking-wide mb-2 flex items-center gap-1.5">
-                        <FileText className="w-3.5 h-3.5" /> Medical Reports ({allReports.length})
-                      </div>
-                      <div className="space-y-2">
-                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                        {allReports.map((report: any) => (
-                          <button
-                            key={report._id}
-                            onClick={() => setViewingReport(report)}
-                            className="w-full text-left bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
-                          >
-                            <div className="text-sm font-medium text-green-900 dark:text-green-100 line-clamp-1">
-                              {report.diagnosis ? report.diagnosis.substring(0, 50) + (report.diagnosis.length > 50 ? '...' : '') : 'No diagnosis'}
-                            </div>
-                            <div className="text-xs text-green-700 dark:text-green-300 mt-1">
-                              {new Date(report.createdAt).toLocaleDateString()} · Dr. {report.doctorName}
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
               </motion.div>
             )}
@@ -588,7 +463,6 @@ function PatientCard({ group }: { group: { patient: Patient; appointments: Appoi
       <AnimatePresence>
         {invoiceApt && <InvoiceModal appointment={invoiceApt} patientName={group.patient.name} onClose={() => setInvoiceApt(null)} />}
         {reportApt && <ReportModal appointment={reportApt} patientName={group.patient.name} onClose={() => setReportApt(null)} />}
-        {viewingReport && <ViewReportModal report={viewingReport} onClose={() => setViewingReport(null)} />}
       </AnimatePresence>
     </>
   )

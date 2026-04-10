@@ -13,7 +13,7 @@ import { Id } from "@/convex/_generated/dataModel";
 import { CalendarIcon, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -28,7 +28,6 @@ interface BookAppointmentModalProps {
 
 export function BookAppointmentModal({ doctorId, doctorName, department }: BookAppointmentModalProps) {
     const { isSignedIn } = useAuth();
-    const currentUser = useQuery(api.patients.getUser);
     const TIME_SLOTS = [
         "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
         "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
@@ -81,12 +80,6 @@ export function BookAppointmentModal({ doctorId, doctorName, department }: BookA
                         {<CalendarIcon className="mr-2 w-4 h-4" />} Book Appointment
                     </Button>
                 </SignInButton>
-            ) : currentUser && currentUser.role === 'guest' && !currentUser.profileCompleted ? (
-                <a href="/appointments">
-                    <Button className="w-full bg-amber-500 hover:bg-amber-600 text-white rounded-full text-sm transition-all duration-200 shadow-sm shadow-amber-500/20">
-                        <CalendarIcon className="mr-2 w-4 h-4" /> Complete Profile to Book
-                    </Button>
-                </a>
             ) : (
                 <Dialog open={isOpen} onOpenChange={setIsOpen}>
                     <DialogTrigger>

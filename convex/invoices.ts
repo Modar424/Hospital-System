@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-
+import { internal } from "./_generated/api";
 
 // الدكتور ينشئ فاتورة - فقط للمواعيد المؤكدة والمنتهية
 export const createInvoice = mutation({
@@ -118,12 +118,11 @@ export const myInvoices = query({
             .withIndex("by_patient", (q) => q.eq("patientId", patient._id))
             .collect();
 
-        // إخفاء الفواتير التي حذفها المريض من واجهته
-        return invoices.filter(inv => !inv.deletedByPatient);
+        return invoices;
     },
 });
 
-// السكرتارية ترى جميع الفواتير (مع إخفاء ما حذفته)
+// السكرتارية ترى جميع الفواتير
 export const getAllInvoices = query({
     handler: async (ctx) => {
         const identity = await ctx.auth.getUserIdentity();
@@ -136,104 +135,6 @@ export const getAllInvoices = query({
 
         if (!caller || (caller.role !== "secretary" && caller.role !== "admin")) return [];
 
-        const all = await ctx.db.query("invoices").order("desc").collect();
-        // السكرتيرة لا ترى ما حذفته
-        return all.filter(inv => !inv.deletedBySecretary);
-    },
-});
-
-// ── نظام الحذف الذكي للفواتير ──────────────────────────────────────────────
-// المريض يحذف الفاتورة من واجهته فقط
-export const patientSoftDeleteInvoice = mutation({
-    args: { invoiceId: v.id("invoices") },
-    handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Unauthorized");
-
-        const patient = await ctx.db
-            .query("patients")
-            .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
-            .first();
-        if (!patient) throw new Error("User not found");
-
-        const invoice = await ctx.db.get(args.invoiceId);
-        if (!invoice) throw new Error("Invoice not found");
-        if (invoice.patientId !== patient._id) throw new Error("Unauthorized");
-
-        // إذا السكرتيرة حذفت وتمت موافقة الأدمن → لا شيء نهائي هنا (الأدمن يقرر)
-        // نضع علامة المريض فقط + pending للأدمن إذا كانت السكرتيرة حذفت
-        if (invoice.deletedBySecretary) {
-            await ctx.db.patch(args.invoiceId, {
-                deletedByPatient: true,
-                pendingAdminApproval: true,
-            });
-        } else {
-            await ctx.db.patch(args.invoiceId, { deletedByPatient: true });
-        }
-    },
-});
-
-// السكرتيرة تحذف الفاتورة - تختفي من واجهتها
-export const secretarySoftDeleteInvoice = mutation({
-    args: { invoiceId: v.id("invoices") },
-    handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Unauthorized");
-
-        const secretary = await ctx.db
-            .query("patients")
-            .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
-            .first();
-        if (!secretary || secretary.role !== "secretary") throw new Error("Unauthorized");
-
-        const invoice = await ctx.db.get(args.invoiceId);
-        if (!invoice) throw new Error("Invoice not found");
-
-        if (invoice.deletedByPatient) {
-            // كلاهما حذف → في انتظار موافقة الأدمن
-            await ctx.db.patch(args.invoiceId, {
-                deletedBySecretary: true,
-                pendingAdminApproval: true,
-            });
-        } else {
-            await ctx.db.patch(args.invoiceId, { deletedBySecretary: true });
-        }
-    },
-});
-
-// الأدمن يوافق على الحذف النهائي للفاتورة
-export const adminApproveDeleteInvoice = mutation({
-    args: { invoiceId: v.id("invoices") },
-    handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Unauthorized");
-
-        const admin = await ctx.db
-            .query("patients")
-            .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
-            .first();
-        if (!admin || admin.role !== "admin") throw new Error("Only admin can approve invoice deletion");
-
-        const invoice = await ctx.db.get(args.invoiceId);
-        if (!invoice) throw new Error("Invoice not found");
-
-        await ctx.db.delete(args.invoiceId);
-    },
-});
-
-// الأدمن يرى الفواتير التي تنتظر موافقته على الحذف
-export const getPendingDeleteInvoices = query({
-    handler: async (ctx) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) return [];
-
-        const admin = await ctx.db
-            .query("patients")
-            .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
-            .first();
-        if (!admin || admin.role !== "admin") return [];
-
-        const invoices = await ctx.db.query("invoices").collect();
-        return invoices.filter(inv => inv.pendingAdminApproval === true);
+        return await ctx.db.query("invoices").order("desc").collect();
     },
 });

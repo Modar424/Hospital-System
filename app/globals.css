@@ -49,9 +49,6 @@
 }
 
 :root {
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-  --font-mono: "Menlo", "Monaco", "Courier New", monospace;
-  
   --primary: #0D9488;
   --primary-dark: #0F766E;
   --secondary: #3B82F6;
