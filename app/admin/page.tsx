@@ -7,10 +7,20 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
    Users, Stethoscope, TrendingUp, Clock,
   Plus, LayoutDashboard, ShieldCheck, Bell, Send,
-  UserCheck, X, CheckCircle2,
+  UserCheck, X, CheckCircle2, Edit2, Trash2, Loader2,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import Link from 'next/link'
@@ -34,6 +44,7 @@ export default function AdminDashboardPage() {
   const setRole       = useMutation(api.patients.setRole)
   const sendNotif     = useMutation(api.notifications.sendMeetingRequest)
   const setDoctorPass = useMutation(api.doctors.setDoctorPassword)
+  const deleteDoctor  = useMutation(api.doctors.deleteDoctor)
 
   const [activeNav,    setActiveNav]    = useState<NavItem>('dashboard')
   const [notifTarget,  setNotifTarget]  = useState<string>('')
@@ -42,6 +53,8 @@ export default function AdminDashboardPage() {
   const [sending,      setSending]      = useState(false)
   const [passModal,    setPassModal]    = useState<{ id: Id<"doctors">; name: string } | null>(null)
   const [newPass,      setNewPass]      = useState('')
+  const [deleteModal,  setDeleteModal]  = useState<{ id: Id<"doctors">; name: string } | null>(null)
+  const [isDeleting,   setIsDeleting]   = useState(false)
 
   // ── Stats ──────────────────────────────────────────────────────────────
   const totalPatients = patientStats?.totalPatients ?? 0
@@ -104,6 +117,20 @@ export default function AdminDashboardPage() {
       toast.error(e instanceof Error ? e.message : 'Failed to send')
     } finally {
       setSending(false)
+    }
+  }
+
+  const handleDeleteDoctor = async () => {
+    if (!deleteModal) return
+    try {
+      setIsDeleting(true)
+      await deleteDoctor({ doctorId: deleteModal.id })
+      toast.success(`Dr. ${deleteModal.name} deleted successfully`)
+      setDeleteModal(null)
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to delete doctor')
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -259,12 +286,69 @@ export default function AdminDashboardPage() {
                     <Badge className="mt-2 text-xs bg-primary/10 text-primary border-0">
                       {doc.experience}+ yrs exp
                     </Badge>
-                    <button
-                      onClick={() => setPassModal({ id: doc._id, name: doc.name })}
-                      className="mt-2 text-xs px-3 py-1 rounded-full border border-border text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors"
-                    >
-                      🔑 Set Password
-                    </button>
+                    <div className="mt-3 flex items-center gap-1.5 flex-wrap">
+                      {/* Set Password Button */}
+                      <button
+                        onClick={() => setPassModal({ id: doc._id, name: doc.name })}
+                        className="text-xs px-2.5 py-1 rounded-full border border-border text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors"
+                        title="Set dashboard password for this doctor"
+                      >
+                        🔑 Set Password
+                      </button>
+
+                      {/* Edit Button */}
+                      <Link href={`/admin/doctors/${doc._id}/edit`}>
+                        <button
+                          className="text-xs px-2.5 py-1 rounded-full border border-border text-muted-foreground hover:border-blue-400/40 hover:text-blue-600 transition-colors flex items-center gap-1"
+                          title="Edit doctor information"
+                        >
+                          <Edit2 className="w-3 h-3" />
+                          Edit
+                        </button>
+                      </Link>
+
+                      {/* Delete Button with AlertDialog */}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <button
+                            onClick={() => setDeleteModal({ id: doc._id, name: doc.name })}
+                            className="text-xs px-2.5 py-1 rounded-full border border-border text-red-600/60 hover:border-red-400/40 hover:text-red-600 transition-colors flex items-center gap-1"
+                            title="Delete this doctor"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            Delete
+                          </button>
+                        </AlertDialogTrigger>
+                        {deleteModal?.id === doc._id && (
+                          <AlertDialogContent className="max-w-md">
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Doctor</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete <strong>Dr. {deleteModal.name}</strong>? 
+                                This action cannot be undone and will also delete all associated appointments.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <div className="flex gap-3 justify-end">
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteDoctor()}
+                                className="bg-red-600 hover:bg-red-700 text-white"
+                                disabled={isDeleting}
+                              >
+                                {isDeleting ? (
+                                  <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin inline" />
+                                    Deleting...
+                                  </>
+                                ) : (
+                                  'Delete'
+                                )}
+                              </AlertDialogAction>
+                            </div>
+                          </AlertDialogContent>
+                        )}
+                      </AlertDialog>
+                    </div>
                   </div>
                 </motion.div>
               )) ?? Array(6).fill(0).map((_, i) => (

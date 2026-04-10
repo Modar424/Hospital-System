@@ -1,5 +1,50 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { Id } from "./_generated/dataModel";
+
+// ==================== TYPES & INTERFACES ====================
+
+export interface ReportMedication {
+  name: string;
+  dosage?: string;
+  frequency?: string;
+}
+
+export interface Report {
+  _id: Id<"reports">;
+  appointmentId: Id<"appointments">;
+  patientId: Id<"patients">;
+  doctorId?: Id<"doctors">;
+  patientName: string;
+  doctorName: string;
+  diagnosis: string;
+  medications: ReportMedication[];
+  notes?: string;
+  createdAt: number;
+  patient?: PatientInfo;
+  doctor?: DoctorInfo;
+  appointment?: AppointmentInfo;
+}
+
+export interface PatientInfo {
+  _id: string;
+  name: string;
+  email: string;
+}
+
+export interface DoctorInfo {
+  _id: string;
+  name: string;
+}
+
+export interface AppointmentInfo {
+  _id: Id<"appointments">;
+  date: number;
+  status: "pending" | "confirmed" | "completed" | "cancelled";
+  notes?: string;
+}
+
+// ==================== MUTATIONS & QUERIES ====================
 
 // الدكتور ينشئ تقرير طبي - بعد انتهاء الموعد مباشرة
 // الدكتور ينشئ تقرير طبي - بعد انتهاء الموعد مباشرة

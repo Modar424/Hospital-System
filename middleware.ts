@@ -31,7 +31,7 @@ export default clerkMiddleware(async (auth, req) => {
     }
     const token = await getToken({ template: "convex" })
     const user  = token ? await fetchQuery(api.patients.getUser, {}, { token }) : null
-    if (!user || (user.role !== "secretary" && user.role !== "admin")) {
+    if (!user || user.role !== "secretary") {
       return NextResponse.redirect(new URL('/?error=unauthorized', req.url))
     }
   }
@@ -44,7 +44,7 @@ export default clerkMiddleware(async (auth, req) => {
     }
     const token = await getToken({ template: "convex" })
     const user  = token ? await fetchQuery(api.patients.getUser, {}, { token }) : null
-    if (!user || (user.role !== "doctor" && user.role !== "admin")) {
+    if (!user || user.role !== "doctor") {
       return NextResponse.redirect(new URL('/?error=unauthorized', req.url))
     }
   }
