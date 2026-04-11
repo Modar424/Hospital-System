@@ -381,12 +381,12 @@ export default function SecretaryPage() {
                   {pending}
                 </span>
               )}
-              {key === 'messages' && secretaryMessageCount > 0 && (
+              {key === 'messages' && (secretaryMessageCount ?? 0) > 0 && (
                 <span className={cn(
                   'ml-auto text-xs px-2 py-0.5 rounded-full font-semibold',
                   activeNav === key ? 'bg-white/20 text-white' : 'bg-violet-500 text-white'
                 )}>
-                  {secretaryMessageCount}
+                  {secretaryMessageCount ?? 0}
                 </span>
               )}
             </button>
