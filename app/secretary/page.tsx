@@ -6,9 +6,9 @@ import { Id } from '@/convex/_generated/dataModel'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Calendar, CheckCircle2, XCircle, Clock, Stethoscope,
-  User, FileText, Search, ClipboardList,
+  User, FileText, Search, ClipboardList, MessageSquare,
   Receipt, ChevronDown, ChevronUp,
-  AlertCircle, Hourglass, TrendingUp
+  AlertCircle, Hourglass
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -16,9 +16,10 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import MessagePanel from '@/components/MessagePanel'
 
 // ── Types ─────────────────────────────────────────────────────────────────
-type NavItem = 'appointments' | 'invoices' | 'reports'
+type NavItem = 'appointments' | 'invoices' | 'reports' | 'messages'
 
 // تعريف نوع الـ Status
 type AppointmentStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled'
@@ -271,6 +272,7 @@ export default function SecretaryPage() {
   const appointments = useQuery(api.appointments.getAppointments) as Appointment[] | undefined
   const invoices     = useQuery(api.invoices.getAllInvoices) as Invoice[] | undefined
   const reports      = useQuery(api.reports.allReports) as Report[] | undefined
+  const secretaryMessageCount = useQuery(api.doctorSecretaryMessages.getSecretaryUnreadMessageCount)
   const updateStatus = useMutation(api.appointments.updateStatus)
 
   const [activeNav,    setActiveNav]    = useState<NavItem>('appointments')
@@ -278,6 +280,7 @@ export default function SecretaryPage() {
   const [search,       setSearch]       = useState('')
   const [confirmModal, setConfirmModal] = useState<{ id: Id<"appointments">; action: 'confirm' | 'cancel' | 'complete' } | null>(null)
   const [processing,   setProcessing]   = useState(false)
+  const [messagePanelOpen, setMessagePanelOpen] = useState(false)
 
   // ── Stats ──────────────────────────────────────────────────────────────
   const total      = appointments?.length ?? 0
@@ -329,6 +332,7 @@ export default function SecretaryPage() {
 
   const navItems: { key: NavItem; label: string; icon: React.ElementType }[] = [
     { key: 'appointments', label: 'Appointments', icon: ClipboardList },
+    { key: 'messages',     label: 'Messages',     icon: MessageSquare },
     { key: 'reports',      label: 'Reports',      icon: FileText      },
     { key: 'invoices',     label: 'Invoices',     icon: Receipt       },
   ]
@@ -375,6 +379,14 @@ export default function SecretaryPage() {
                   activeNav === key ? 'bg-white/20 text-white' : 'bg-amber-500 text-white'
                 )}>
                   {pending}
+                </span>
+              )}
+              {key === 'messages' && secretaryMessageCount > 0 && (
+                <span className={cn(
+                  'ml-auto text-xs px-2 py-0.5 rounded-full font-semibold',
+                  activeNav === key ? 'bg-white/20 text-white' : 'bg-violet-500 text-white'
+                )}>
+                  {secretaryMessageCount}
                 </span>
               )}
             </button>
@@ -662,7 +674,27 @@ export default function SecretaryPage() {
           </motion.div>
         )}
 
+        {/* ══ MESSAGES ══════════════════════════════════════════════ */}
+        {activeNav === 'messages' && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <button
+              onClick={() => setMessagePanelOpen(true)}
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-full font-medium transition-all shadow-lg shadow-violet-500/20"
+            >
+              <MessageSquare className="w-5 h-5" />
+              فتح لوحة الرسائل
+            </button>
+          </motion.div>
+        )}
+
       </main>
+
+      {/* Message Panel */}
+      <MessagePanel 
+        userRole="secretary"
+        isOpen={messagePanelOpen} 
+        onClose={() => setMessagePanelOpen(false)} 
+      />
 
       {/* ── Confirmation Modal ─────────────────────────────────────────── */}
       <AnimatePresence>

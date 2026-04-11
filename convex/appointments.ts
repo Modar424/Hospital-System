@@ -3,6 +3,8 @@ import { mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { notifyAppointmentCreated, notifyAppointmentConfirmed, notifyAppointmentCancelled, notifyAppointmentCompleted } from "./appointmentNotifications";
 
+const APPOINTMENT_LIMIT = 3; // الحد الأقصى للحجوزات النشطة
+
 export const createAppointment = mutation({
     args: {
         department: v.string(),
@@ -16,24 +18,6 @@ export const createAppointment = mutation({
 
         if (new Date(args.date).getTime() <= Date.now()) {
             throw new Error("Please select a future date");
-        }
-
-        if (args.doctorId) {
-            const requestedTime = new Date(args.date).getTime();
-            const existingAppts = await ctx.db
-                .query("appointments")
-                .withIndex("by_doctor", (q) => q.eq("doctorId", args.doctorId))
-                .collect();
-
-            const conflict = existingAppts.find((apt) => {
-                if (apt.status === "cancelled") return false;
-                const diff = Math.abs(apt.date - requestedTime);
-                return diff < 30 * 60 * 1000;
-            });
-
-            if (conflict) {
-                throw new Error("Doctor already booked at this time. Please choose a different slot.");
-            }
         }
 
         let patient = await ctx.db
@@ -51,6 +35,50 @@ export const createAppointment = mutation({
             patient = await ctx.db.get(id);
         }
         if (!patient) throw new Error("Could not create patient");
+
+        // ✅ التحقق من وجود ملف شخصي قبل الحجز
+        const patientProfile = await ctx.db
+            .query("patientProfiles")
+            .withIndex("by_patient", (q) => q.eq("patientId", patient._id))
+            .unique();
+
+        if (!patientProfile) {
+            throw new Error("يجب ملء ملفك الشخصي أولاً قبل حجز موعد / You must complete your profile first before booking an appointment");
+        }
+
+        // ✅ التحقق من حد الحجوزات النشطة
+        const existingPatientAppts = await ctx.db
+            .query("appointments")
+            .withIndex("by_patient", (q) => q.eq("patientId", patient._id))
+            .collect();
+
+        const activeAppointments = existingPatientAppts.filter(
+            (apt) => apt.status === "pending" || apt.status === "confirmed"
+        );
+
+        if (activeAppointments.length >= APPOINTMENT_LIMIT) {
+            throw new Error(
+                `You have reached the maximum number of active bookings (${APPOINTMENT_LIMIT}). Please cancel one or wait for an appointment to complete.`
+            );
+        }
+
+        if (args.doctorId) {
+            const requestedTime = new Date(args.date).getTime();
+            const existingAppts = await ctx.db
+                .query("appointments")
+                .withIndex("by_doctor", (q) => q.eq("doctorId", args.doctorId))
+                .collect();
+
+            const conflict = existingAppts.find((apt) => {
+                if (apt.status === "cancelled") return false;
+                const diff = Math.abs(apt.date - requestedTime);
+                return diff < 30 * 60 * 1000;
+            });
+
+            if (conflict) {
+                throw new Error("Its already booking try different time");
+            }
+        }
 
         const appointmentId = await ctx.db.insert("appointments", {
             department: args.department,

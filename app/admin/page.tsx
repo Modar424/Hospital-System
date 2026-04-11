@@ -25,8 +25,10 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import AdminNotificationsPanel from '@/components/AdminNotificationsPanel'
+import { FileText } from 'lucide-react'
 
-type NavItem = 'dashboard' | 'doctors' | 'users' | 'notify' | 'pharmacy'
+type NavItem = 'dashboard' | 'doctors' | 'users' | 'notify' | 'pharmacy' | 'reports'
 type Role = 'admin' | 'guest' | 'doctor' | 'secretary'
 
 const roleConfig: Record<Role, { label: string; color: string }> = {
@@ -41,6 +43,7 @@ export default function AdminDashboardPage() {
   const doctors       = useQuery(api.doctors.getDoctors)
   const allUsers      = useQuery(api.patients.getAllUsers)
   const patientStats  = useQuery(api.patients.getPatientStats)
+  const unreadNotifCount = useQuery(api.adminNotifications?.getAdminUnreadCount ?? (() => 0))
   const setRole       = useMutation(api.patients.setRole)
   const sendNotif     = useMutation(api.notifications.sendMeetingRequest)
   const setDoctorPass = useMutation(api.doctors.setDoctorPassword)
@@ -55,6 +58,7 @@ export default function AdminDashboardPage() {
   const [newPass,      setNewPass]      = useState('')
   const [deleteModal,  setDeleteModal]  = useState<{ id: Id<"doctors">; name: string } | null>(null)
   const [isDeleting,   setIsDeleting]   = useState(false)
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
 
   // ── Stats ──────────────────────────────────────────────────────────────
   const totalPatients = patientStats?.totalPatients ?? 0
@@ -71,6 +75,7 @@ export default function AdminDashboardPage() {
   })()
 
   const doctorUsers = allUsers?.filter(u => u.role === 'doctor') ?? []
+  const adminCount = allUsers?.filter(u => u.role === 'admin').length ?? 0
 
   const statCards = [
     { label: 'Total Patients',    value: totalPatients, icon: Users,      color: 'text-primary',     bg: 'bg-primary/10'  },
@@ -84,6 +89,7 @@ export default function AdminDashboardPage() {
     { key: 'doctors',   label: 'Doctors',            icon: Stethoscope     },
     { key: 'users',     label: 'Users & Roles',      icon: ShieldCheck     },
     { key: 'notify',    label: 'Send Notification',  icon: Bell            },
+    { key: 'reports',   label: 'Reports & Notifs',   icon: FileText        },
   ]
 
   const [doctorPickModal, setDoctorPickModal] = useState<{ userId: Id<"patients">; userName: string } | null>(null)
@@ -152,7 +158,13 @@ export default function AdminDashboardPage() {
           {navItems.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
-              onClick={() => setActiveNav(key)}
+              onClick={() => {
+                if (key === 'reports') {
+                  setNotificationsOpen(true)
+                } else {
+                  setActiveNav(key)
+                }
+              }}
               className={cn(
                 'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
                 activeNav === key
@@ -161,7 +173,12 @@ export default function AdminDashboardPage() {
               )}
             >
               <Icon className="w-4 h-4" />
-              {label}
+              <span className="flex-1 text-left">{label}</span>
+              {key === 'reports' && unreadNotifCount ? (
+                <Badge className="bg-red-500 text-white rounded-full text-xs px-2 py-0.5">
+                  {unreadNotifCount}
+                </Badge>
+              ) : null}
             </button>
           ))}
         </nav>
@@ -388,8 +405,13 @@ export default function AdminDashboardPage() {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex flex-wrap gap-1.5">
+                            {u.role === 'admin' && adminCount === 1 && (
+                              <span className="text-[11px] px-2.5 py-1 rounded-full border bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-800">
+                                Last admin
+                              </span>
+                            )}
                             {(['guest', 'doctor', 'secretary', 'admin'] as Role[]).map(r => (
-                              r !== u.role && (
+                              r !== u.role && !(u.role === 'admin' && adminCount === 1 && r !== 'admin') && (
                                 <button
                                   key={r}
                                   onClick={() => {
@@ -614,6 +636,12 @@ export default function AdminDashboardPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ── Admin Notifications Panel ──────────────────────────────── */}
+      <AdminNotificationsPanel 
+        isOpen={notificationsOpen}
+        onClose={() => setNotificationsOpen(false)}
+      />
     </div>
   )
 }

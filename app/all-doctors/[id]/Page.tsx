@@ -39,7 +39,13 @@ export default function DoctorProfilePage() {
       setDate('')
       setNotes('')
     } catch (error) {
-      const msg = error instanceof Error ? error.message : 'Failed to book. Please sign in first.'
+      console.error('Booking error:', error)
+      let msg = 'Failed to book appointment'
+      if (error instanceof Error) {
+        msg = error.message
+      } else if (typeof error === 'object' && error !== null && 'message' in error) {
+        msg = (error as { message: string }).message
+      }
       toast.error(msg)
     } finally {
       setBooking(false)

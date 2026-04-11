@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button"
 import {
     Dialog,
@@ -10,15 +11,16 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Id } from "@/convex/_generated/dataModel";
-import { CalendarIcon, Loader2 } from "lucide-react";
+import { CalendarIcon, Loader2, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
-import { useMutation } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/nextjs";
 import { SignInButton } from "@clerk/nextjs";
+import Link from "next/link";
 
 interface BookAppointmentModalProps {
     doctorId: Id<"doctors">;
@@ -28,6 +30,7 @@ interface BookAppointmentModalProps {
 
 export function BookAppointmentModal({ doctorId, doctorName, department }: BookAppointmentModalProps) {
     const { isSignedIn } = useAuth();
+    const patientProfile = useQuery(api.patientProfiles.getMyPatientProfile);
     const TIME_SLOTS = [
         "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
         "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
@@ -66,32 +69,57 @@ export function BookAppointmentModal({ doctorId, doctorName, department }: BookA
             setDate(undefined);
         } catch (error) {
             console.error("Failed to book appointment", error);
-            toast.error("Failed to book appointment. Please try again.");
+            const errorMessage = (error as Error)?.message || "Failed to book appointment";
+            
+            if (errorMessage.includes("ملف") || errorMessage.includes("profile")) {
+                toast.error("يجب ملء ملفك الشخصي أولاً قبل الحجز");
+            } else {
+                toast.error(errorMessage);
+            }
         } finally {
             setIsLoading(false);
         }
     };
 
-    return (
-        <>
-            {!isSignedIn ? (
-                <SignInButton mode="modal">
-                    <Button className="w-full bg-primary hover:bg-primary/90 text-white rounded-full text-sm transition-all duration-200 shadow-sm shadow-primary/20 hover:shadow-primary/40 hover:shadow-lg">
-                        {<CalendarIcon className="mr-2 w-4 h-4" />} Book Appointment
-                    </Button>
+    if (!isSignedIn) {
+        return (
+            <div className="w-full">
+                <SignInButton mode="modal" fallbackRedirectUrl="/appointments">
+                    <div className="w-full bg-primary hover:bg-primary/90 text-white rounded-full text-sm transition-all duration-200 shadow-sm shadow-primary/20 hover:shadow-primary/40 hover:shadow-lg p-3 cursor-pointer flex items-center justify-center gap-2">
+                        <CalendarIcon className="w-4 h-4" />
+                        Book Appointment
+                    </div>
                 </SignInButton>
-            ) : (
-                <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                    <DialogTrigger>
-                        <span className={cn(
-                            "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
-                            "bg-primary text-primary-foreground shadow hover:bg-primary/90",
-                            "h-11 rounded-md px-8 text-lg flex-1 md:flex-none"
-                        )}>
-                            <CalendarIcon className="mr-2 w-5 h-5" /> Book Appointment
-                        </span>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-425px">
+            </div>
+        );
+    }
+
+    // إذا لم يكن لديه ملف شخصي
+    if (!patientProfile) {
+        return (
+            <div className="w-full">
+                <Link href="/patient-profile" className="block w-full">
+                    <div className="w-full bg-amber-600 hover:bg-amber-700 text-white rounded-full text-sm transition-all duration-200 shadow-sm shadow-amber-600/20 hover:shadow-amber-600/40 hover:shadow-lg gap-2 p-3 cursor-pointer flex items-center justify-center">
+                        <AlertCircle className="w-4 h-4" />
+                        ملء الملف الشخصي أولاً
+                    </div>
+                </Link>
+                <p className="text-xs text-amber-700 dark:text-amber-300 mt-2 text-center">
+                    يجب ملء ملفك الشخصي قبل الحجز
+                </p>
+            </div>
+        );
+    }
+
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger className="w-full">
+                <div className="w-full bg-primary hover:bg-primary/90 text-white rounded-full text-sm transition-all duration-200 shadow-sm shadow-primary/20 hover:shadow-primary/40 hover:shadow-lg gap-2 p-3 cursor-pointer flex items-center justify-center">
+                    <CalendarIcon className="w-4 h-4" />
+                    Book Appointment
+                </div>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-sm">
                 <DialogHeader>
                     <DialogTitle>Book Appointment</DialogTitle>
                     <DialogDescription>
@@ -137,7 +165,21 @@ export function BookAppointmentModal({ doctorId, doctorName, department }: BookA
                             </div>
                         </div>
                     )}
+
+                    {/* Notes Section */}
+                    <div className="flex flex-col gap-2">
+                        <Label htmlFor="notes">Notes (Optional)</Label>
+                        <textarea
+                            id="notes"
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                            placeholder="Any additional information..."
+                            className="border rounded-md p-2 text-sm resize-none"
+                            rows={3}
+                        />
+                    </div>
                 </div>
+
                 <DialogFooter>
                     <Button variant="outline" onClick={() => setIsOpen(false)}>
                         Cancel
@@ -145,14 +187,13 @@ export function BookAppointmentModal({ doctorId, doctorName, department }: BookA
                     <Button 
                         onClick={handleBook} 
                         disabled={!date || !selectedTime || isLoading}
+                        className="w-full"
                     >
                         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Confirm Booking
+                        {isLoading ? 'Booking...' : 'Confirm Booking'}
                     </Button>
                 </DialogFooter>
-                    </DialogContent>
-                </Dialog>
-            )}
-        </>
+            </DialogContent>
+        </Dialog>
     );
 }

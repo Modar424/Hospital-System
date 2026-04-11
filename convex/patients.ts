@@ -72,6 +72,18 @@ export const setRole = mutation({
 
         const previousRole = targetUser.role;
 
+        // منع خفض أو تغيير دور آخر أدمن في النظام
+        if (previousRole === "admin" && args.role !== "admin") {
+            const adminCandidates = await ctx.db
+                .query("patients")
+                .withIndex("by_role", (q) => q.eq("role", "admin"))
+                .take(2);
+
+            if (adminCandidates.length <= 1) {
+                throw new Error("يجب أن يكون هناك أدمن واحد على الأقل في النظام");
+            }
+        }
+
         // عند تعيين دور doctor، يجب ربطه بسجل دكتور
         if (args.role === "doctor" && args.doctorId) {
             await ctx.db.patch(args.userId, { role: args.role, doctorId: args.doctorId });

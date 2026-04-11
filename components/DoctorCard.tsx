@@ -36,7 +36,7 @@ function DoctorCard({ doctor, index = 0 }: DoctorCardProps) {
         className="overflow-hidden border border-border bg-card rounded-2xl shadow-sm hover:shadow-2xl hover:border-primary/50 transition-all duration-500 group h-full flex flex-col"
         style={{ boxShadow: hovered ? '0 20px 60px -10px rgb(13 148 136 / 0.25)' : '0 4px 20px -5px rgb(13 148 136 / 0.08)' }}
       >
-        <div className="relative h-72 w-full overflow-hidden bg-gradient-to-br from-primary/10 to-teal-50 dark:from-primary/20 dark:to-teal-950">
+        <div className="relative h-72 w-full overflow-hidden bg-linear-to-br from-primary/10 to-teal-50 dark:from-primary/20 dark:to-teal-950">
           {!imgError && doctor.image ? (
             <>
               <motion.div
@@ -54,7 +54,7 @@ function DoctorCard({ doctor, index = 0 }: DoctorCardProps) {
                   priority={false}
                 />
               </motion.div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
+              <div className="absolute inset-0 bg-linear-to-t from-black/50 via-black/10 to-transparent" />
             </>
           ) : (
             <div className="w-full h-full flex items-center justify-center">

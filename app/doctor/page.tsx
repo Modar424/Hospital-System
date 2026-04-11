@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Stethoscope, User, Clock, CheckCircle2,
   XCircle, Hourglass, FileText, Receipt, Plus, X,
-  ChevronDown, ChevronUp, Bell, ClipboardList,
+  ChevronDown, ChevronUp, Bell, ClipboardList, MessageSquare,
   AlertCircle, Send, Eye, EyeOff, LogIn, ShieldCheck, Calendar
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -15,8 +15,9 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import MessagePanel from '@/components/MessagePanel'
 
-type NavItem = 'patients' | 'notifications'
+type NavItem = 'patients' | 'notifications' | 'messages'
 
 interface Appointment {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -43,9 +44,13 @@ function formatDate(ts: number) {
 function canCreateInvoice(apt: Appointment): boolean {
   if (apt.status !== 'confirmed' && apt.status !== 'completed') return false
   if (apt.hasInvoice) return false
-  const today = new Date(); today.setHours(0,0,0,0)
-  const apptDay = new Date(apt.date); apptDay.setHours(0,0,0,0)
-  return apptDay <= today
+  return true
+}
+
+function canCreateReport(apt: Appointment): boolean {
+  if (apt.status !== 'confirmed' && apt.status !== 'completed') return false
+  if (apt.hasReport) return false
+  return true
 }
 
 // ── Doctor Auth Screen ─────────────────────────────────────────────────────
@@ -327,8 +332,8 @@ function AppointmentItem({ apt, onCreateInvoice, onCreateReport }: { apt: Appoin
   const [completing, setCompleting] = useState(false)
 
   const canInvoice = canCreateInvoice(apt)
-  const canReport = canCreateInvoice(apt) && !apt.hasReport
-  const canComplete = (apt.status === 'pending' || apt.status === 'confirmed') && !apt.hasReport
+  const canReport = canCreateReport(apt)
+  const canComplete = (apt.status === 'pending' || apt.status === 'confirmed') && apt.hasReport && apt.hasInvoice
 
   const handleComplete = async () => {
     setCompleting(true)
@@ -473,11 +478,13 @@ export default function DoctorDashboardPage() {
   const currentUser  = useQuery(api.patients.getUser)
   const groups       = useQuery(api.appointments.getMyPatientsAppointments)
   const notifications= useQuery(api.notifications.myNotifications)
+  const doctorMessageCount = useQuery(api.doctorSecretaryMessages.getDoctorUnreadMessageCount)
   const markRead     = useMutation(api.notifications.markAsRead)
   const unreadCount  = useQuery(api.notifications.getUnreadCount)
 
   const [activeNav,    setActiveNav]    = useState<NavItem>('patients')
   const [verifiedName, setVerifiedName] = useState<string | null>(null)
+  const [messagePanelOpen, setMessagePanelOpen] = useState(false)
 
   if (currentUser === undefined) {
     return <div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>
@@ -507,6 +514,7 @@ export default function DoctorDashboardPage() {
 
   const navItems: { key: NavItem; label: string; icon: React.ElementType }[] = [
     { key: 'patients',      label: 'My Patients',  icon: ClipboardList },
+    { key: 'messages',      label: 'Messages',     icon: MessageSquare },
     { key: 'notifications', label: 'Notifications',icon: Bell          },
   ]
 
@@ -527,7 +535,7 @@ export default function DoctorDashboardPage() {
         <div className="px-2 mb-6">
           <div className="bg-slate-800 rounded-xl p-3">
             <div className="text-xs text-slate-400 mb-0.5">Signed in as</div>
-            <div className="font-semibold text-white text-sm truncate">Dr. {verifiedName}</div>
+            <div className="font-semibold text-white text-sm truncate"> {verifiedName}</div>
           </div>
         </div>
 
@@ -542,6 +550,12 @@ export default function DoctorDashboardPage() {
                 <span className={cn('ml-auto text-xs px-2 py-0.5 rounded-full font-semibold',
                   activeNav === key ? 'bg-white/20 text-white' : 'bg-red-500 text-white')}>
                   {unreadCount}
+                </span>
+              )}
+              {key === 'messages' && (doctorMessageCount ?? 0) > 0 && (
+                <span className={cn('ml-auto text-xs px-2 py-0.5 rounded-full font-semibold',
+                  activeNav === key ? 'bg-white/20 text-white' : 'bg-violet-500 text-white')}>
+                  {doctorMessageCount}
                 </span>
               )}
             </button>
@@ -559,6 +573,7 @@ export default function DoctorDashboardPage() {
             </Button>
           </Link>
         </div>
+
       </aside>
 
       {/* Main */}
@@ -662,7 +677,27 @@ export default function DoctorDashboardPage() {
             )}
           </motion.div>
         )}
+
+        {/* ══ MESSAGES ══════════════════════════════════════════════ */}
+        {activeNav === 'messages' && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <button
+              onClick={() => setMessagePanelOpen(true)}
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-full font-medium transition-all shadow-lg shadow-violet-500/20"
+            >
+              <MessageSquare className="w-5 h-5" />
+              فتح لوحة الرسائل
+            </button>
+          </motion.div>
+        )}
       </main>
+
+      {/* Message Panel */}
+      <MessagePanel 
+        userRole="doctor"
+        isOpen={messagePanelOpen} 
+        onClose={() => setMessagePanelOpen(false)} 
+      />
     </div>
   )
 }

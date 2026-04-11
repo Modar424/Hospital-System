@@ -37,6 +37,23 @@ export default defineSchema({
         .index("by_token", ["tokenIdentifier"])
         .index("by_role",  ["role"]),
 
+    patientProfiles: defineTable({
+        patientId:        v.id("patients"),
+        phone:            v.string(),
+        dateOfBirth:      v.string(),
+        gender:           v.union(v.literal("male"), v.literal("female"), v.literal("other")),
+        bloodType:        v.string(),
+        address:          v.string(),
+        emergencyContact: v.string(),
+        medicalHistory:   v.array(v.string()), // حالات طبية سابقة
+        allergies:        v.array(v.string()), // الحساسيات
+        profileImage:     v.optional(v.string()), // صورة المريض (Storage ID)
+        notes:            v.optional(v.string()),
+        createdAt:        v.number(),
+        updatedAt:        v.number(),
+    })
+        .index("by_patient", ["patientId"]),
+
     appointments: defineTable({
         doctorId: v.optional(v.id("doctors")),
         patientId: v.id("patients"),
@@ -111,6 +128,13 @@ export default defineSchema({
         .index("by_available", ["available"])
         .index("by_category", ["category"]),
 
+    appointmentLimits: defineTable({
+        patientId: v.id("patients"),
+        activeCount: v.number(), // عدد الحجوزات النشطة (pending, confirmed)
+        lastUpdated: v.number(),
+    })
+        .index("by_patient", ["patientId"]),
+
     notifications: defineTable({
         fromUserId:  v.id("patients"),
         toUserId:    v.id("patients"),
@@ -132,7 +156,12 @@ export default defineSchema({
             v.literal("promoted_to_admin"),
             v.literal("promoted_to_doctor"),
             v.literal("promoted_to_secretary"),
-            v.literal("demoted")
+            v.literal("demoted"),
+            v.literal("appointment_cancellation_alert"),
+            v.literal("financial_report"),
+            v.literal("admin_report_notification"),
+            v.literal("doctor_to_secretary_message"),
+            v.literal("secretary_to_doctor_message")
         ),
         message:     v.string(),
         isRead:      v.boolean(),

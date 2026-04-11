@@ -7,7 +7,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Calendar, Clock, User, Stethoscope, AlertCircle,
   CheckCircle2, XCircle, Hourglass, PlusCircle, MapPin, FileText,
-  Receipt, Download, CreditCard, ChevronRight
+  Receipt, Download, CreditCard, ChevronRight, Phone, Droplets,
+  Heart, AlertTriangle, Edit3, Copy
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -46,6 +47,282 @@ function formatDate(ts: number, lang: string) {
     weekday: 'short', year: 'numeric', month: 'short',
     day: 'numeric', hour: '2-digit', minute: '2-digit',
   })
+}
+
+// ── Patient Profile Card ───────────────────────────────────────────────────
+interface PatientProfileData {
+  _id: string
+  patientId: string
+  patientName: string
+  patientEmail: string
+  phone: string
+  dateOfBirth: string
+  gender: string
+  bloodType: string
+  address: string
+  emergencyContact: string
+  medicalHistory: string[]
+  allergies: string[]
+  profileImage?: string
+  notes?: string
+}
+
+function ProfileCard({ profile, lang }: { profile: PatientProfileData | null | undefined; lang: string }) {
+  const [copied, setCopied] = useState(false)
+
+  if (!profile) {
+    return (
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-24">
+        <motion.div
+          animate={{ y: [0, -8, 0] }}
+          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+          className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6"
+        >
+          <FileText className="w-12 h-12 text-primary" />
+        </motion.div>
+        <h3 className="text-2xl font-bold mb-2">
+          {lang === 'ar' ? 'لم تقم بإنشاء ملفك الشخصي' : 'No Profile Yet'}
+        </h3>
+        <p className="text-muted-foreground max-w-sm mx-auto mb-8">
+          {lang === 'ar'
+            ? 'يجب عليك إنشاء ملف شخصي حتى تتمكن من حجز المواعيد'
+            : 'Create your profile first to book appointments'}
+        </p>
+        <Link href="/patient-profile">
+          <Button className="bg-primary hover:bg-primary/90 text-white rounded-full px-8 shadow-lg shadow-primary/20 gap-2">
+            <FileText className="w-4 h-4" />
+            {lang === 'ar' ? 'إنشاء ملفي الشخصي' : 'Create Profile'}
+          </Button>
+        </Link>
+      </motion.div>
+    )
+  }
+
+  const handleCopyId = () => {
+    navigator.clipboard.writeText(profile.patientId)
+    setCopied(true)
+    toast.success(lang === 'ar' ? 'تم نسخ الرقم' : 'ID copied')
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+      {/* Header card */}
+      <div className="bg-linear-to-r from-primary/10 to-teal-100 dark:from-primary/20 dark:to-teal-900/20 rounded-3xl border border-primary/20 p-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+          <div>
+            <motion.h2
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.1 }}
+              className="text-3xl font-bold text-foreground mb-1"
+            >
+              {profile.patientName}
+            </motion.h2>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="text-muted-foreground"
+            >
+              {profile.patientEmail}
+            </motion.p>
+          </div>
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.3 }}
+            className="w-20 h-20 rounded-2xl bg-primary/20 flex items-center justify-center shrink-0 border border-primary/30"
+          >
+            <User className="w-10 h-10 text-primary" />
+          </motion.div>
+        </div>
+
+        {/* ID Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="mt-6 bg-card border border-border rounded-2xl p-4 flex items-center justify-between"
+        >
+          <div>
+            <div className="text-xs text-muted-foreground mb-1 uppercase tracking-wider font-semibold">
+              {lang === 'ar' ? 'رقم الملف الشخصي' : 'Patient ID'}
+            </div>
+            <div className="text-xl font-mono font-bold text-foreground">{profile.patientId}</div>
+          </div>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleCopyId}
+            className="p-3 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+          >
+            <Copy className={`w-5 h-5 transition-transform ${copied ? 'scale-110' : ''}`} />
+          </motion.button>
+        </motion.div>
+      </div>
+
+      {/* Basic Info Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {[
+          { icon: Phone, label: lang === 'ar' ? 'الهاتف' : 'Phone', value: profile.phone },
+          { icon: Calendar, label: lang === 'ar' ? 'تاريخ الميلاد' : 'Date of Birth', value: profile.dateOfBirth },
+          { icon: User, label: lang === 'ar' ? 'الجنس' : 'Gender', value: profile.gender === 'male' ? (lang === 'ar' ? 'ذكر' : 'Male') : profile.gender === 'female' ? (lang === 'ar' ? 'أنثى' : 'Female') : (lang === 'ar' ? 'آخر' : 'Other') },
+          { icon: Droplets, label: lang === 'ar' ? 'فصيلة الدم' : 'Blood Type', value: profile.bloodType },
+        ].map((item, idx) => {
+          const Icon = item.icon
+          return (
+            <motion.div
+              key={item.label}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 + idx * 0.05 }}
+              className="bg-card border border-border rounded-2xl p-4"
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Icon className="w-5 h-5 text-primary" />
+                </div>
+                <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">{item.label}</span>
+              </div>
+              <div className="text-lg font-semibold text-foreground">{item.value || '—'}</div>
+            </motion.div>
+          )
+        })}
+      </div>
+
+      {/* Address & Emergency Contact */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-card border border-border rounded-2xl p-4"
+        >
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <MapPin className="w-5 h-5 text-primary" />
+            </div>
+            <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">
+              {lang === 'ar' ? 'العنوان' : 'Address'}
+            </span>
+          </div>
+          <p className="text-sm leading-relaxed text-foreground">{profile.address || '—'}</p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45 }}
+          className="bg-card border border-border rounded-2xl p-4"
+        >
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
+              <AlertCircle className="w-5 h-5 text-amber-600" />
+            </div>
+            <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">
+              {lang === 'ar' ? 'جهة اتصال طوارئ' : 'Emergency Contact'}
+            </span>
+          </div>
+          <p className="text-sm leading-relaxed text-foreground">{profile.emergencyContact || '—'}</p>
+        </motion.div>
+      </div>
+
+      {/* Medical History */}
+      {profile.medicalHistory && profile.medicalHistory.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="bg-card border border-border rounded-2xl p-4"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
+              <FileText className="w-5 h-5 text-blue-600" />
+            </div>
+            <span className="text-sm font-semibold text-foreground">
+              {lang === 'ar' ? 'التاريخ الطبي' : 'Medical History'}
+            </span>
+          </div>
+          <div className="space-y-2">
+            {profile.medicalHistory.map((history, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5 + idx * 0.05 }}
+                className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-lg px-3 py-2"
+              >
+                <div className="w-2 h-2 rounded-full bg-blue-500" />
+                {history}
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
+      {/* Allergies */}
+      {profile.allergies && profile.allergies.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.55 }}
+          className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-2xl p-4"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center">
+              <AlertTriangle className="w-5 h-5 text-red-600" />
+            </div>
+            <span className="text-sm font-semibold text-red-700 dark:text-red-400">
+              {lang === 'ar' ? 'الحساسيات' : 'Allergies'}
+            </span>
+          </div>
+          <div className="space-y-2">
+            {profile.allergies.map((allergy, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.55 + idx * 0.05 }}
+                className="flex items-center gap-2 text-sm text-red-700 dark:text-red-400 bg-white/50 dark:bg-red-950/20 rounded-lg px-3 py-2"
+              >
+                <div className="w-2 h-2 rounded-full bg-red-500" />
+                {allergy}
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
+      {/* Notes */}
+      {profile.notes && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="bg-card border border-border rounded-2xl p-4"
+        >
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
+              <Heart className="w-5 h-5 text-purple-600" />
+            </div>
+            <span className="text-sm font-semibold text-foreground">
+              {lang === 'ar' ? 'ملاحظات' : 'Notes'}
+            </span>
+          </div>
+          <p className="text-sm leading-relaxed text-muted-foreground">{profile.notes}</p>
+        </motion.div>
+      )}
+
+      {/* Edit Button */}
+      <Link href="/patient-profile">
+        <Button className="w-full bg-primary hover:bg-primary/90 text-white rounded-full gap-2 py-6 text-lg shadow-lg shadow-primary/20">
+          <Edit3 className="w-5 h-5" />
+          {lang === 'ar' ? 'تحديث البيانات' : 'Update Profile'}
+        </Button>
+      </Link>
+    </motion.div>
+  )
 }
 
 // ── Guest / not-logged-in wall ─────────────────────────────────────────────
@@ -305,12 +582,13 @@ export default function AppointmentsPage() {
   const { isSignedIn } = useAuth()
   const appointments = useQuery(api.appointments.myAppointments)
   const invoices     = useQuery(api.invoices.myInvoices)
+  const patientProfile = useQuery(api.patientProfiles.getMyPatientProfile)
   const updateStatus = useMutation(api.appointments.updateStatus)
 
   const [cancelId,    setCancelId]   = useState<Id<"appointments"> | null>(null)
   const [cancelling,  setCancelling] = useState(false)
   const [filter,      setFilter]     = useState<'all' | 'pending' | 'confirmed' | 'completed' | 'cancelled'>('all')
-  const [activeTab,   setActiveTab]  = useState<'appointments' | 'invoices'>('appointments')
+  const [activeTab,   setActiveTab]  = useState<'appointments' | 'invoices' | 'profile'>('appointments')
   const { lang } = useI18n()
 
   // Show login wall for guests
@@ -397,11 +675,11 @@ export default function AppointmentsPage() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="flex gap-1 bg-muted/60 p-1 rounded-2xl mb-8 w-fit"
+          className="flex gap-1 bg-muted/60 p-1 rounded-2xl mb-8 w-fit overflow-x-auto"
         >
           <button
             onClick={() => setActiveTab('appointments')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 whitespace-nowrap ${
               activeTab === 'appointments'
                 ? 'bg-background text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
@@ -417,19 +695,30 @@ export default function AppointmentsPage() {
           </button>
           <button
             onClick={() => setActiveTab('invoices')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 whitespace-nowrap ${
               activeTab === 'invoices'
                 ? 'bg-background text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             <Receipt className="w-4 h-4" />
-            {lang === 'ar' ? 'سجل الفواتير' : 'Invoice History'}
+            {lang === 'ar' ? 'الفواتير' : 'Invoices'}
             {(invoices?.length ?? 0) > 0 && (
               <span className={`text-xs px-1.5 py-0.5 rounded-full ${activeTab === 'invoices' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
                 {invoices?.length}
               </span>
             )}
+          </button>
+          <button
+            onClick={() => setActiveTab('profile')}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 whitespace-nowrap ${
+              activeTab === 'profile'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <User className="w-4 h-4" />
+            {lang === 'ar' ? 'ملفي' : 'My Profile'}
           </button>
         </motion.div>
 
@@ -628,6 +917,15 @@ export default function AppointmentsPage() {
                   ))}
                 </div>
               )}
+            </motion.div>
+          </AnimatePresence>
+        )}
+
+        {/* ── PROFILE TAB ─────────────────────────────────────────── */}
+        {activeTab === 'profile' && (
+          <AnimatePresence mode="wait">
+            <motion.div key="profile-tab" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}>
+              <ProfileCard profile={patientProfile} lang={lang} />
             </motion.div>
           </AnimatePresence>
         )}
