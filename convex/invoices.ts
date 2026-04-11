@@ -137,3 +137,53 @@ export const getAllInvoices = query({
         return await ctx.db.query("invoices").order("desc").collect();
     },
 });
+
+// السكرتيرة تُعلّم الفاتورة كمدفوعة وتُرسل إشعاراً للأدمن
+export const markInvoicePaid = mutation({
+    args: {
+        invoiceId: v.id("invoices"),
+        medicationFees: v.optional(v.number()),
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Unauthorized");
+
+        const caller = await ctx.db
+            .query("patients")
+            .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
+            .unique();
+
+        if (!caller || (caller.role !== "secretary" && caller.role !== "admin")) {
+            throw new Error("Only secretary or admin can mark invoices as paid");
+        }
+
+        const invoice = await ctx.db.get(args.invoiceId);
+        if (!invoice) throw new Error("Invoice not found");
+
+        const totalAmount = (invoice.doctorFees ?? 0) + (args.medicationFees ?? invoice.medicationFees ?? 0);
+
+        await ctx.db.patch(args.invoiceId, {
+            status: "paid",
+            medicationFees: args.medicationFees ?? invoice.medicationFees,
+            totalAmount,
+        });
+
+        // إرسال إشعار للأدمن
+        const admins = await ctx.db
+            .query("patients")
+            .withIndex("by_role", (q) => q.eq("role", "admin"))
+            .collect();
+
+        for (const admin of admins) {
+            await ctx.db.insert("notifications", {
+                fromUserId: caller._id,
+                toUserId: admin._id,
+                type: "invoice_paid",
+                message: `✅ تم دفع الفاتورة رقم ${invoice.invoiceNumber} - المريض: ${invoice.patientName} - الدكتور: ${invoice.doctorName} - المبلغ الإجمالي: ${totalAmount} ريال`,
+                isRead: false,
+            });
+        }
+
+        return { success: true, totalAmount };
+    },
+});

@@ -11,7 +11,7 @@ export async function sendNotification(
   ctx: MutationCtx,
   fromUserId: Id<"patients">,
   toUserId: Id<"patients">,
-  type: "meeting_request" | "general" | "invoice_created" | "patient_message_to_secretary" | "secretary_message_to_patient" | "secretary_message_to_doctor" | "doctor_message_to_secretary" | "appointment_created" | "appointment_confirmed" | "appointment_cancelled" | "appointment_completed" | "report_created" | "report_available" | "role_assigned" | "promoted_to_admin" | "promoted_to_doctor" | "promoted_to_secretary" | "demoted",
+  type: "meeting_request" | "general" | "invoice_created" | "patient_message_to_secretary" | "secretary_message_to_patient" | "secretary_message_to_doctor" | "doctor_message_to_secretary" | "appointment_created" | "appointment_confirmed" | "appointment_cancelled" | "appointment_completed" | "report_created" | "report_available" | "role_assigned" | "promoted_to_admin" | "promoted_to_doctor" | "promoted_to_secretary" | "demoted" | "invoice_paid",
   message: string
 ) {
   return await ctx.db.insert("notifications", {
@@ -28,7 +28,7 @@ export async function sendNotificationToMany(
   ctx: MutationCtx,
   fromUserId: Id<"patients">,
   toUserIds: Id<"patients">[],
-  type: "meeting_request" | "general" | "invoice_created" | "patient_message_to_secretary" | "secretary_message_to_patient" | "secretary_message_to_doctor" | "doctor_message_to_secretary" | "appointment_created" | "appointment_confirmed" | "appointment_cancelled" | "appointment_completed" | "report_created" | "report_available" | "role_assigned" | "promoted_to_admin" | "promoted_to_doctor" | "promoted_to_secretary" | "demoted",
+  type: "meeting_request" | "general" | "invoice_created" | "patient_message_to_secretary" | "secretary_message_to_patient" | "secretary_message_to_doctor" | "doctor_message_to_secretary" | "appointment_created" | "appointment_confirmed" | "appointment_cancelled" | "appointment_completed" | "report_created" | "report_available" | "role_assigned" | "promoted_to_admin" | "promoted_to_doctor" | "promoted_to_secretary" | "demoted" | "invoice_paid",
   message: string
 ) {
   return Promise.all(
@@ -95,7 +95,8 @@ export const myNotifications = query({
             .query("notifications")
             .withIndex("by_recipient", (q) => q.eq("toUserId", caller._id))
             .order("desc")
-            .collect();
+            .collect()
+            .then(results => results.filter(n => !n.isDeleted));
     },
 });
 
@@ -109,6 +110,20 @@ export const markAsRead = mutation({
         if (!notif) throw new Error("Not found");
 
         await ctx.db.patch(args.notificationId, { isRead: true });
+    },
+});
+
+export const deleteNotification = mutation({
+    args: { notificationId: v.id("notifications") },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Unauthorized");
+
+        const notif = await ctx.db.get(args.notificationId);
+        if (!notif) throw new Error("Notification not found");
+
+        // حذف الإشعار بوضع isDeleted = true (soft delete)
+        await ctx.db.patch(args.notificationId, { isDeleted: true });
     },
 });
 
@@ -129,6 +144,6 @@ export const getUnreadCount = query({
             .withIndex("by_recipient", (q) => q.eq("toUserId", caller._id))
             .collect();
 
-        return unread.filter(n => !n.isRead).length;
+        return unread.filter(n => !n.isRead && !n.isDeleted).length;
     },
 });

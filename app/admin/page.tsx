@@ -131,7 +131,7 @@ export default function AdminDashboardPage() {
     try {
       setIsDeleting(true)
       await deleteDoctor({ doctorId: deleteModal.id })
-      toast.success(`Dr. ${deleteModal.name} deleted successfully`)
+      toast.success(` ${deleteModal.name} deleted successfully`)
       setDeleteModal(null)
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to delete doctor')
@@ -232,7 +232,7 @@ export default function AdminDashboardPage() {
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">Most Booked Doctor</div>
-                  <div className="font-semibold text-lg">Dr. {mostBooked}</div>
+                  <div className="font-semibold text-lg">{mostBooked}</div>
                 </div>
               </div>
             )}
@@ -251,7 +251,7 @@ export default function AdminDashboardPage() {
                     <div>
                       <div className="text-sm font-medium">{apt.patient?.name ?? 'Unknown'}</div>
                       <div className="text-xs text-muted-foreground">
-                        {apt.doctor?.name ? `Dr. ${apt.doctor.name}` : apt.department} · {new Date(apt.date).toLocaleDateString()}
+                        {apt.doctor?.name ? `${apt.doctor.name}` : apt.department} · {new Date(apt.date).toLocaleDateString()}
                       </div>
                     </div>
                     <Badge className={cn('text-xs border', {
@@ -341,7 +341,7 @@ export default function AdminDashboardPage() {
                             <AlertDialogHeader>
                               <AlertDialogTitle>Delete Doctor</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Are you sure you want to delete <strong>Dr. {deleteModal.name}</strong>? 
+                                Are you sure you want to delete <strong>{deleteModal.name}</strong>? 
                                 This action cannot be undone and will also delete all associated appointments.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
@@ -542,7 +542,7 @@ export default function AdminDashboardPage() {
               <div className="flex items-center justify-between mb-5">
                 <div>
                   <h3 className="font-bold text-lg">Set Dashboard Password</h3>
-                  <p className="text-sm text-muted-foreground mt-0.5">Dr. {passModal.name}</p>
+                  <p className="text-sm text-muted-foreground mt-0.5">{passModal.name}</p>
                 </div>
                 <button onClick={() => { setPassModal(null); setNewPass('') }} className="p-2 hover:bg-muted rounded-lg">
                   <X className="w-4 h-4" />

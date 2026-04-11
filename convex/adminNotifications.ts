@@ -110,6 +110,7 @@ export const getAdminNotifications = query({
             .filter(
                 (n) =>
                     n.type === "financial_report" ||
+                    n.type === "invoice_paid" ||
                     n.type === "admin_report_notification"
             )
             .sort((a, b) => b._creationTime - a._creationTime);
@@ -140,6 +141,7 @@ export const getAdminUnreadCount = query({
             (n) =>
                 !n.isRead &&
                 (n.type === "financial_report" ||
+                    n.type === "invoice_paid" ||
                     n.type === "admin_report_notification")
         ).length;
     },

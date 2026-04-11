@@ -100,7 +100,7 @@ export const getDoctorMessages = query({
 
         // تصفية الرسائل من السكرتيرات فقط
         const fromSecretaries = messages
-            .filter((m) => m.type === "secretary_to_doctor_message")
+            .filter((m) => m.type === "secretary_to_doctor_message" && !m.isDeleted)
             .sort((a, b) => b._creationTime - a._creationTime);
 
         // إضافة بيانات المرسل
@@ -139,7 +139,7 @@ export const getSecretaryMessages = query({
 
         // تصفية الرسائل من الأطباء فقط
         const fromDoctors = messages
-            .filter((m) => m.type === "doctor_to_secretary_message")
+            .filter((m) => m.type === "doctor_to_secretary_message" && !m.isDeleted)
             .sort((a, b) => b._creationTime - a._creationTime);
 
         // إضافة بيانات المرسل
@@ -178,7 +178,7 @@ export const getDoctorUnreadMessageCount = query({
 
         return messages.filter(
             (m) =>
-                !m.isRead && m.type === "secretary_to_doctor_message"
+                !m.isRead && !m.isDeleted && m.type === "secretary_to_doctor_message"
         ).length;
     },
 });
@@ -205,7 +205,7 @@ export const getSecretaryUnreadMessageCount = query({
 
         return messages.filter(
             (m) =>
-                !m.isRead && m.type === "doctor_to_secretary_message"
+                !m.isRead && !m.isDeleted && m.type === "doctor_to_secretary_message"
         ).length;
     },
 });

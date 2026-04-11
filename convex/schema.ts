@@ -67,6 +67,7 @@ export default defineSchema({
         ),
         notes: v.optional(v.string()),
         reportId: v.optional(v.id("reports")), // ربط التقرير الطبي بالموعد
+        trashedAt: v.optional(v.number()), // timestamp عندما تم نقل الموعد إلى الـ Trash
     })
         .index("by_doctor", ["doctorId"])
         .index("by_patient", ["patientId"])
@@ -161,10 +162,12 @@ export default defineSchema({
             v.literal("financial_report"),
             v.literal("admin_report_notification"),
             v.literal("doctor_to_secretary_message"),
-            v.literal("secretary_to_doctor_message")
+            v.literal("secretary_to_doctor_message"),
+            v.literal("invoice_paid")
         ),
         message:     v.string(),
         isRead:      v.boolean(),
+        isDeleted:   v.optional(v.boolean()),
         scheduledAt: v.optional(v.number()),
     })
         .index("by_recipient", ["toUserId"])

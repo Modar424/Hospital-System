@@ -7,7 +7,7 @@ import {
   Stethoscope, User, Clock, CheckCircle2,
   XCircle, Hourglass, FileText, Receipt, Plus, X,
   ChevronDown, ChevronUp, Bell, ClipboardList, MessageSquare,
-  AlertCircle, Send, Eye, EyeOff, LogIn, ShieldCheck, Calendar
+  AlertCircle, Send, Eye, EyeOff, LogIn, ShieldCheck, Calendar, Users, Trash2, RotateCcw
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -17,7 +17,7 @@ import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import MessagePanel from '@/components/MessagePanel'
 
-type NavItem = 'patients' | 'notifications' | 'messages'
+type NavItem = 'patients' | 'notifications' | 'messages' | 'profiles' | 'trash'
 
 interface Appointment {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -327,7 +327,7 @@ function ReportModal({ appointment, patientName, onClose }: { appointment: Appoi
 }
 
 // ── Appointment Item ───────────────────────────────────────────────────────
-function AppointmentItem({ apt, onCreateInvoice, onCreateReport }: { apt: Appointment; onCreateInvoice: () => void; onCreateReport: () => void }) {
+function AppointmentItem({ apt, onCreateInvoice, onCreateReport, onMoveToTrash }: { apt: Appointment; onCreateInvoice: () => void; onCreateReport: () => void; onMoveToTrash?: () => void }) {
   const updateStatus = useMutation(api.appointments.updateStatus)
   const [completing, setCompleting] = useState(false)
 
@@ -382,13 +382,19 @@ function AppointmentItem({ apt, onCreateInvoice, onCreateReport }: { apt: Appoin
             <Plus className="w-3.5 h-3.5" /> Invoice
           </button>
         )}
+        {(apt.status === 'cancelled' || apt.status === 'completed') && onMoveToTrash && (
+          <button onClick={onMoveToTrash}
+            className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-full bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-colors font-medium">
+            <Trash2 className="w-3.5 h-3.5" /> سلة محذوفات
+          </button>
+        )}
       </div>
     </div>
   )
 }
 
 // ── Patient Card ───────────────────────────────────────────────────────────
-function PatientCard({ group }: { group: { patient: Patient; appointments: Appointment[] } }) {
+function PatientCard({ group, onMoveToTrash }: { group: { patient: Patient; appointments: Appointment[] }; onMoveToTrash?: (appointmentId: string) => Promise<void> }) {
   const [expanded, setExpanded] = useState(false)
   const [invoiceApt, setInvoiceApt] = useState<Appointment | null>(null)
   const [reportApt, setReportApt] = useState<Appointment | null>(null)
@@ -432,7 +438,7 @@ function PatientCard({ group }: { group: { patient: Patient; appointments: Appoi
                       <div className="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-2 flex items-center gap-1.5">
                         <Hourglass className="w-3.5 h-3.5" /> Pending ({pending.length})
                       </div>
-                      <div className="space-y-2">{pending.map(apt => <AppointmentItem key={apt._id} apt={apt} onCreateInvoice={() => setInvoiceApt(apt)} onCreateReport={() => setReportApt(apt)} />)}</div>
+                      <div className="space-y-2">{pending.map(apt => <AppointmentItem key={apt._id} apt={apt} onCreateInvoice={() => setInvoiceApt(apt)} onCreateReport={() => setReportApt(apt)} onMoveToTrash={onMoveToTrash ? () => onMoveToTrash(apt._id) : undefined} />)}</div>
                     </div>
                   )}
                   {confirmed.length > 0 && (
@@ -440,7 +446,7 @@ function PatientCard({ group }: { group: { patient: Patient; appointments: Appoi
                       <div className="text-xs font-semibold text-teal-600 uppercase tracking-wide mb-2 flex items-center gap-1.5">
                         <CheckCircle2 className="w-3.5 h-3.5" /> Confirmed ({confirmed.length})
                       </div>
-                      <div className="space-y-2">{confirmed.map(apt => <AppointmentItem key={apt._id} apt={apt} onCreateInvoice={() => setInvoiceApt(apt)} onCreateReport={() => setReportApt(apt)} />)}</div>
+                      <div className="space-y-2">{confirmed.map(apt => <AppointmentItem key={apt._id} apt={apt} onCreateInvoice={() => setInvoiceApt(apt)} onCreateReport={() => setReportApt(apt)} onMoveToTrash={onMoveToTrash ? () => onMoveToTrash(apt._id) : undefined} />)}</div>
                     </div>
                   )}
                   {completed.length > 0 && (
@@ -448,7 +454,7 @@ function PatientCard({ group }: { group: { patient: Patient; appointments: Appoi
                       <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
                         <FileText className="w-3.5 h-3.5" /> Completed ({completed.length})
                       </div>
-                      <div className="space-y-2">{completed.map(apt => <AppointmentItem key={apt._id} apt={apt} onCreateInvoice={() => setInvoiceApt(apt)} onCreateReport={() => setReportApt(apt)} />)}</div>
+                      <div className="space-y-2">{completed.map(apt => <AppointmentItem key={apt._id} apt={apt} onCreateInvoice={() => setInvoiceApt(apt)} onCreateReport={() => setReportApt(apt)} onMoveToTrash={onMoveToTrash ? () => onMoveToTrash(apt._id) : undefined} />)}</div>
                     </div>
                   )}
                   {cancelled.length > 0 && (
@@ -456,7 +462,7 @@ function PatientCard({ group }: { group: { patient: Patient; appointments: Appoi
                       <div className="text-xs font-semibold text-red-400 uppercase tracking-wide mb-2 flex items-center gap-1.5">
                         <XCircle className="w-3.5 h-3.5" /> Cancelled ({cancelled.length})
                       </div>
-                      <div className="space-y-2">{cancelled.map(apt => <AppointmentItem key={apt._id} apt={apt} onCreateInvoice={() => setInvoiceApt(apt)} onCreateReport={() => setReportApt(apt)} />)}</div>
+                      <div className="space-y-2">{cancelled.map(apt => <AppointmentItem key={apt._id} apt={apt} onCreateInvoice={() => setInvoiceApt(apt)} onCreateReport={() => setReportApt(apt)} onMoveToTrash={onMoveToTrash ? () => onMoveToTrash(apt._id) : undefined} />)}</div>
                     </div>
                   )}
                 </div>
@@ -479,12 +485,20 @@ export default function DoctorDashboardPage() {
   const groups       = useQuery(api.appointments.getMyPatientsAppointments)
   const notifications= useQuery(api.notifications.myNotifications)
   const doctorMessageCount = useQuery(api.doctorSecretaryMessages.getDoctorUnreadMessageCount)
+  const allProfiles  = useQuery(api.patientProfiles.getAllPatientProfiles)
+  const cancelledAppointments = useQuery(api.trash.getCancelledAppointments)
   const markRead     = useMutation(api.notifications.markAsRead)
+  const deleteNotif  = useMutation(api.notifications.deleteNotification)
+  const moveAppointmentToTrash = useMutation(api.trash.moveAppointmentToTrash)
+  const permanentDeleteAppointment = useMutation(api.trash.permanentDeleteAppointment)
+  const restoreAppointment = useMutation(api.trash.restoreAppointment)
   const unreadCount  = useQuery(api.notifications.getUnreadCount)
 
   const [activeNav,    setActiveNav]    = useState<NavItem>('patients')
   const [verifiedName, setVerifiedName] = useState<string | null>(null)
   const [messagePanelOpen, setMessagePanelOpen] = useState(false)
+  const [expandedTrashItems, setExpandedTrashItems] = useState<Record<string, boolean>>({})
+  const [trashTab, setTrashTab] = useState<'completed' | 'cancelled'>('completed')
 
   if (currentUser === undefined) {
     return <div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>
@@ -511,11 +525,23 @@ export default function DoctorDashboardPage() {
   const totalPatients  = groups?.length ?? 0
   const totalPending   = groups?.reduce((acc, g) => acc + g.appointments.filter((a: Appointment) => a.status === 'pending').length, 0) ?? 0
   const totalConfirmed = groups?.reduce((acc, g) => acc + g.appointments.filter((a: Appointment) => a.status === 'confirmed').length, 0) ?? 0
+  const trashCount = cancelledAppointments?.length ?? 0
+
+  const handleMoveToTrash = async (appointmentId: string) => {
+    try {
+      await moveAppointmentToTrash({ appointmentId: appointmentId as any })
+      toast.success('تم نقل الموعد إلى السلة ✓')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'فشل نقل الموعد')
+    }
+  }
 
   const navItems: { key: NavItem; label: string; icon: React.ElementType }[] = [
-    { key: 'patients',      label: 'My Patients',  icon: ClipboardList },
-    { key: 'messages',      label: 'Messages',     icon: MessageSquare },
-    { key: 'notifications', label: 'Notifications',icon: Bell          },
+    { key: 'patients',      label: 'My Patients',     icon: ClipboardList },
+    { key: 'profiles',      label: 'Patient Profiles', icon: Users        },
+    { key: 'messages',      label: 'Messages',         icon: MessageSquare },
+    { key: 'notifications', label: 'Notifications',    icon: Bell          },
+    { key: 'trash',         label: 'Trash',            icon: Trash2        },
   ]
 
   return (
@@ -556,6 +582,12 @@ export default function DoctorDashboardPage() {
                 <span className={cn('ml-auto text-xs px-2 py-0.5 rounded-full font-semibold',
                   activeNav === key ? 'bg-white/20 text-white' : 'bg-violet-500 text-white')}>
                   {doctorMessageCount}
+                </span>
+              )}
+              {key === 'trash' && trashCount > 0 && (
+                <span className={cn('ml-auto text-xs px-2 py-0.5 rounded-full font-semibold',
+                  activeNav === key ? 'bg-white/20 text-white' : 'bg-red-500 text-white')}>
+                  {trashCount}
                 </span>
               )}
             </button>
@@ -619,7 +651,7 @@ export default function DoctorDashboardPage() {
                 <p className="text-sm mt-1">Patients will appear once appointments are booked with you</p>
               </div>
             ) : (
-              <div className="space-y-3">{groups.map(group => <PatientCard key={group.patient._id} group={group} />)}</div>
+              <div className="space-y-3">{groups.map(group => <PatientCard key={group.patient._id} group={group} onMoveToTrash={handleMoveToTrash} />)}</div>
             )}
           </motion.div>
         )}
@@ -632,14 +664,14 @@ export default function DoctorDashboardPage() {
             </div>
             {notifications === undefined ? (
               <div className="space-y-3">{Array(3).fill(0).map((_, i) => <div key={i} className="h-20 rounded-2xl bg-muted animate-pulse" />)}</div>
-            ) : notifications.length === 0 ? (
+            ) : notifications.filter(n => !n.isDeleted).length === 0 ? (
               <div className="text-center py-24 text-muted-foreground">
                 <Bell className="w-12 h-12 mx-auto mb-3 opacity-30" />
                 <p className="font-medium">No notifications yet</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {notifications.map((notif, i) => (
+                {notifications.filter(n => !n.isDeleted).map((notif, i) => (
                   <motion.div key={notif._id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
                     className={cn('bg-card border rounded-2xl p-5', notif.isRead ? 'border-border' : 'border-primary/40 shadow-md shadow-primary/5')}>
                     <div className="flex items-start justify-between gap-4">
@@ -663,14 +695,119 @@ export default function DoctorDashboardPage() {
                       </div>
                       <div className="flex flex-col items-end gap-2 shrink-0">
                         <span className="text-xs text-muted-foreground">{new Date(notif._creationTime).toLocaleDateString()}</span>
-                        {!notif.isRead && (
-                          <button onClick={() => markRead({ notificationId: notif._id })}
-                            className="text-xs px-3 py-1 rounded-full border border-primary/30 text-primary hover:bg-primary/10 transition-colors">
-                            Mark read
+                        <div className="flex gap-1.5">
+                          {!notif.isRead && (
+                            <button onClick={() => markRead({ notificationId: notif._id })}
+                              className="text-xs px-3 py-1 rounded-full border border-primary/30 text-primary hover:bg-primary/10 transition-colors">
+                              Mark read
+                            </button>
+                          )}
+                          <button onClick={async () => {
+                            try {
+                              await deleteNotif({ notificationId: notif._id })
+                              toast.success('تم حذف الإشعار')
+                            } catch (e) {
+                              toast.error(e instanceof Error ? e.message : 'فشل الحذف')
+                            }
+                          }}
+                            className="text-xs px-3 py-1 rounded-full border border-red-300/50 text-red-600 hover:bg-red-50 transition-colors">
+                            Delete
                           </button>
-                        )}
+                        </div>
                       </div>
                     </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* ══ PROFILES ══════════════════════════════════════════════ */}
+        {activeNav === 'profiles' && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold">Patient Profiles</h1>
+              <p className="text-muted-foreground text-sm mt-0.5">Medical profiles for all registered patients</p>
+            </div>
+            {allProfiles === undefined ? (
+              <div className="space-y-3">{Array(4).fill(0).map((_, i) => <div key={i} className="h-24 rounded-2xl bg-muted animate-pulse" />)}</div>
+            ) : allProfiles.length === 0 ? (
+              <div className="text-center py-24 text-muted-foreground">
+                <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                <p className="font-medium">No patient profiles yet</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {allProfiles.map((profile, i) => (
+                  <motion.div key={profile._id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
+                    className="bg-card border border-border rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="w-11 h-11 bg-teal-100 dark:bg-teal-900/40 rounded-full flex items-center justify-center shrink-0">
+                        <User className="w-5 h-5 text-teal-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-foreground truncate">{profile.patientName}</p>
+                        <p className="text-xs text-muted-foreground truncate">{profile.patientEmail}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <code className="text-xs bg-muted px-2 py-1 rounded font-mono text-muted-foreground truncate">
+                            ID: {profile.patientId}
+                          </code>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(profile.patientId);
+                              toast.success('تم نسخ ID المريض');
+                            }}
+                            className="text-xs px-2 py-1 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                          >
+                            Copy
+                          </button>
+                        </div>
+                      </div>
+                      <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium',
+                        profile.gender === 'male' ? 'bg-blue-100 text-blue-700' :
+                        profile.gender === 'female' ? 'bg-pink-100 text-pink-700' : 'bg-gray-100 text-gray-700')}>
+                        {profile.gender === 'male' ? 'ذكر' : profile.gender === 'female' ? 'أنثى' : 'آخر'}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="bg-muted/50 rounded-lg p-2">
+                        <span className="text-muted-foreground block">فصيلة الدم</span>
+                        <span className="font-semibold text-foreground">{profile.bloodType}</span>
+                      </div>
+                      <div className="bg-muted/50 rounded-lg p-2">
+                        <span className="text-muted-foreground block">تاريخ الميلاد</span>
+                        <span className="font-semibold text-foreground">{profile.dateOfBirth}</span>
+                      </div>
+                      <div className="bg-muted/50 rounded-lg p-2">
+                        <span className="text-muted-foreground block">الهاتف</span>
+                        <span className="font-semibold text-foreground">{profile.phone}</span>
+                      </div>
+                      <div className="bg-muted/50 rounded-lg p-2">
+                        <span className="text-muted-foreground block">طوارئ</span>
+                        <span className="font-semibold text-foreground truncate block">{profile.emergencyContact}</span>
+                      </div>
+                    </div>
+                    {(profile.allergies?.length > 0 || profile.medicalHistory?.length > 0) && (
+                      <div className="mt-3 space-y-1.5">
+                        {profile.allergies?.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            <span className="text-xs text-muted-foreground ml-1">حساسية:</span>
+                            {profile.allergies.map((a: string, idx: number) => (
+                              <span key={idx} className="text-xs px-2 py-0.5 bg-red-50 text-red-600 rounded-full border border-red-100">{a}</span>
+                            ))}
+                          </div>
+                        )}
+                        {profile.medicalHistory?.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            <span className="text-xs text-muted-foreground ml-1">تاريخ طبي:</span>
+                            {profile.medicalHistory.map((h: string, idx: number) => (
+                              <span key={idx} className="text-xs px-2 py-0.5 bg-amber-50 text-amber-600 rounded-full border border-amber-100">{h}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </motion.div>
                 ))}
               </div>
@@ -688,6 +825,200 @@ export default function DoctorDashboardPage() {
               <MessageSquare className="w-5 h-5" />
               فتح لوحة الرسائل
             </button>
+          </motion.div>
+        )}
+
+        {/* ══ TRASH (CANCELLED & COMPLETED APPOINTMENTS) ════════════════════════ */}
+        {activeNav === 'trash' && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-foreground">سلة المحذوفات</h2>
+                <p className="text-sm text-muted-foreground mt-1">إدارة المواعيد الملغاة والمكتملة والمحذوفة</p>
+              </div>
+              {trashCount > 0 && (
+                <div className="px-4 py-2 rounded-full bg-red-100 text-red-700 font-semibold">
+                  {trashCount} موعد
+                </div>
+              )}
+            </div>
+
+            {/* Tabs */}
+            <div className="flex gap-2 border-b border-border">
+              <button
+                onClick={() => setTrashTab('completed')}
+                className={cn(
+                  'px-4 py-3 font-medium text-sm transition-colors border-b-2',
+                  trashTab === 'completed'
+                    ? 'text-primary border-primary'
+                    : 'text-muted-foreground border-transparent hover:text-foreground'
+                )}
+              >
+                المواعيد المكتملة
+                {(cancelledAppointments?.filter((apt: any) => apt.status === 'completed').length ?? 0) > 0 && (
+                  <span className="ml-2 px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold">
+                    {cancelledAppointments?.filter((apt: any) => apt.status === 'completed').length ?? 0}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setTrashTab('cancelled')}
+                className={cn(
+                  'px-4 py-3 font-medium text-sm transition-colors border-b-2',
+                  trashTab === 'cancelled'
+                    ? 'text-primary border-primary'
+                    : 'text-muted-foreground border-transparent hover:text-foreground'
+                )}
+              >
+                المواعيد الملغاة
+                {(cancelledAppointments?.filter((apt: any) => apt.status === 'cancelled').length ?? 0) > 0 && (
+                  <span className="ml-2 px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-semibold">
+                    {cancelledAppointments?.filter((apt: any) => apt.status === 'cancelled').length ?? 0}
+                  </span>
+                )}
+              </button>
+            </div>
+
+            {!cancelledAppointments || (cancelledAppointments?.filter((apt: any) => apt.status === trashTab).length ?? 0) === 0 ? (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center justify-center py-16"
+              >
+                <div className="text-center">
+                  <Trash2 className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-muted-foreground">
+                    {trashTab === 'completed' ? 'لا توجد مواعيد مكتملة' : 'لا توجد مواعيد ملغاة'}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1">سلة المحذوفات فارغة</p>
+                </div>
+              </motion.div>
+            ) : (
+              <div className="space-y-3">
+                <AnimatePresence mode="popLayout">
+                  {cancelledAppointments
+                    ?.filter((apt: any) => apt.status === trashTab)
+                    .map((apt: any) => {
+                      const isExpanded = expandedTrashItems[apt._id] ?? false
+                      const toggleExpanded = () => {
+                        setExpandedTrashItems((prev) => ({
+                          ...prev,
+                          [apt._id]: !prev[apt._id]
+                        }))
+                      }
+                      return (
+                        <motion.div
+                          key={apt._id}
+                          layout
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 20 }}
+                          className={cn(
+                            'bg-card border rounded-2xl overflow-hidden hover:shadow-md transition-all duration-200',
+                            trashTab === 'completed' ? 'border-slate-200' : 'border-red-200'
+                          )}
+                        >
+                          {/* Main header - collapsible */}
+                          <button
+                            onClick={toggleExpanded}
+                            className="w-full p-5 hover:bg-muted/50 transition-colors text-left"
+                          >
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                              {/* Patient info */}
+                              <div className="flex items-start gap-3 flex-1 min-w-0">
+                                <div className={cn(
+                                  'w-11 h-11 rounded-xl flex items-center justify-center shrink-0',
+                                  trashTab === 'completed' ? 'bg-slate-100' : 'bg-red-100'
+                                )}>
+                                  <User className={cn('w-5 h-5', trashTab === 'completed' ? 'text-slate-600' : 'text-red-600')} />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="font-semibold text-base">{apt.patient?.name ?? '—'}</div>
+                                  <div className="text-xs text-muted-foreground mt-0.5">{apt.patient?.email}</div>
+                                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-2">
+                                    {apt.doctor?.name && (
+                                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                        <Stethoscope className={cn('w-3 h-3', trashTab === 'completed' ? 'text-slate-600/60' : 'text-red-600/60')} />
+                                        {apt.doctor.name}
+                                        {apt.doctor.category && <span className={cn(trashTab === 'completed' ? 'text-slate-600/60' : 'text-red-600/60')}>({apt.doctor.category})</span>}
+                                      </span>
+                                    )}
+                                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                      <Clock className={cn('w-3 h-3', trashTab === 'completed' ? 'text-slate-600/60' : 'text-red-600/60')} />
+                                      {formatDate(apt.date)}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Expand icon */}
+                              <div className="flex items-center gap-2 shrink-0">
+                                <div className="text-sm text-muted-foreground">
+                                  {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                                </div>
+                              </div>
+                            </div>
+                          </button>
+
+                          {/* Expanded details */}
+                          <AnimatePresence>
+                            {isExpanded && (
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className={cn(
+                                  'overflow-hidden border-t',
+                                  trashTab === 'completed' ? 'border-slate-200' : 'border-red-200'
+                                )}
+                              >
+                                <div className="p-5">
+                                  {/* Action buttons only */}
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={async () => {
+                                        try {
+                                          await restoreAppointment({
+                                            appointmentId: apt._id,
+                                            status: trashTab === 'completed' ? 'completed' : ('cancelled' as const)
+                                          })
+                                          toast.success('تم استعادة الموعد بنجاح')
+                                        } catch {
+                                          toast.error('فشل في استعادة الموعد')
+                                        }
+                                      }}
+                                      className="flex-1 flex items-center justify-center gap-1 text-sm px-3 py-2 rounded-lg bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100 transition-colors font-medium"
+                                    >
+                                      <RotateCcw className="w-4 h-4" /> استعادة
+                                    </button>
+                                    <button
+                                      onClick={async () => {
+                                        if (confirm('هل أنت متأكد من حذف هذا الموعد نهائياً؟')) {
+                                          try {
+                                            await permanentDeleteAppointment({
+                                              appointmentId: apt._id
+                                            })
+                                            toast.success('تم حذف الموعد نهائياً')
+                                          } catch {
+                                            toast.error('فشل في حذف الموعد')
+                                          }
+                                        }
+                                      }}
+                                      className="flex-1 flex items-center justify-center gap-1 text-sm px-3 py-2 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-colors font-medium"
+                                    >
+                                      <Trash2 className="w-4 h-4" /> حذف نهائي
+                                    </button>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </motion.div>
+                      )
+                    })}
+                </AnimatePresence>
+              </div>
+            )}
           </motion.div>
         )}
       </main>

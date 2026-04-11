@@ -30,6 +30,7 @@ import type * as reports from "../reports.js";
 import type * as roleNotifications from "../roleNotifications.js";
 import type * as secretaryDoctorNotifications from "../secretaryDoctorNotifications.js";
 import type * as stats from "../stats.js";
+import type * as trash from "../trash.js";
 
 import type {
   ApiFromModules,
@@ -60,6 +61,7 @@ declare const fullApi: ApiFromModules<{
   roleNotifications: typeof roleNotifications;
   secretaryDoctorNotifications: typeof secretaryDoctorNotifications;
   stats: typeof stats;
+  trash: typeof trash;
 }>;
 
 /**

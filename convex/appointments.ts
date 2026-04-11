@@ -242,8 +242,11 @@ export const getAppointments = query({
         if (!user || (user.role !== "admin" && user.role !== "secretary")) return [];
 
         const appointments = await ctx.db.query("appointments").order("desc").collect();
+        // تصفية المواعيد المنقولة للـ Trash (التي فيها trashedAt)
+        const active = appointments.filter((apt) => !apt.trashedAt);
+        
         return Promise.all(
-            appointments.map(async (appointment) => {
+            active.map(async (appointment) => {
                 const doctor = appointment.doctorId ? await ctx.db.get(appointment.doctorId) : null;
                 const patient = await ctx.db.get(appointment.patientId);
                 // هل يوجد فاتورة لهذا الموعد؟
@@ -281,8 +284,11 @@ export const myAppointments = query({
             .withIndex("by_patient", (q) => q.eq("patientId", patient._id))
             .collect();
 
+        // تصفية المواعيد المنقولة للـ Trash
+        const activeAppointments = appointments.filter((apt) => !apt.trashedAt);
+
         return Promise.all(
-            appointments.map(async (app) => {
+            activeAppointments.map(async (app) => {
                 const doctor = app.doctorId ? await ctx.db.get(app.doctorId) : null;
                 // هل يوجد تقرير لهذا الموعد؟
                 const report = await ctx.db
@@ -316,11 +322,13 @@ export const getMyPatientsAppointments = query({
             .withIndex("by_doctor", (q) => q.eq("doctorId", caller.doctorId))
             .collect();
 
-        
+        // تصفية المواعيد المنقولة للـ Trash (استبعادها من My Patients)
+        const activeAppointments = appointments.filter((apt) => !apt.trashedAt);
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const patientMap = new Map<string, any>();
 
-        for (const apt of appointments) {
+        for (const apt of activeAppointments) {
             const patient = await ctx.db.get(apt.patientId);
             if (!patient) continue;
 
