@@ -8,6 +8,7 @@ import {
   X, MessageSquare, Send, Loader2, Trash2, RotateCcw, Inbox
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useI18n } from '@/lib/i18n'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -48,6 +49,7 @@ export default function MessagePanel({ userRole, isOpen, onClose }: MessagePanel
   const restoreNotif = useMutation(api.trash.restoreNotification)
   const permanentDelete = useMutation(api.trash.permanentDeleteNotification)
 
+  const { lang } = useI18n()
   const [activeTab, setActiveTab] = useState<'inbox' | 'trash'>('inbox')
   const [newMessage, setNewMessage] = useState('')
   const [isSending, setIsSending] = useState(false)
@@ -232,7 +234,7 @@ export default function MessagePanel({ userRole, isOpen, onClose }: MessagePanel
                   <p className="font-medium text-foreground text-sm">
                     {userRole === 'doctor' ? 'لا توجد رسائل من السكرتيرات' : 'لا توجد رسائل من الأطباء'}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">الرسائل الجديدة ستظهر هنا</p>
+                  <p className="text-xs text-muted-foreground mt-1">{lang === 'ar' ? 'الرسائل الجديدة ستظهر هنا' : 'New messages will appear here'}</p>
                 </div>
               )
             ) : (
@@ -270,7 +272,7 @@ export default function MessagePanel({ userRole, isOpen, onClose }: MessagePanel
                   <div className="w-14 h-14 bg-muted rounded-full flex items-center justify-center mb-3">
                     <Trash2 className="w-7 h-7 text-muted-foreground" />
                   </div>
-                  <p className="font-medium text-foreground text-sm">سلة المحذوفات فارغة</p>
+                  <p className="font-medium text-foreground text-sm">{lang === 'ar' ? 'سلة المحذوفات فارغة' : 'Trash is empty'}</p>
                 </div>
               )
             )}

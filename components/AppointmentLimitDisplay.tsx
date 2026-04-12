@@ -9,13 +9,15 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { useI18n } from '@/lib/i18n'
 
 interface AppointmentLimitDisplayProps {
   patientId: Id<"patients">
   onLimitReached?: () => void
 }
 
-export default function AppointmentLimitDisplay({ 
+export default function AppointmentLimitDisplay({
+  const { lang } = useI18n() 
   patientId, 
   onLimitReached 
 }: AppointmentLimitDisplayProps) {
@@ -99,7 +101,7 @@ export default function AppointmentLimitDisplay({
           {/* Active Appointments */}
           {activeAppointments && activeAppointments.length > 0 && (
             <div className="bg-white/50 dark:bg-black/20 rounded-lg p-3 mb-3">
-              <p className="text-xs font-semibold mb-2 text-foreground/70">الحجوزات النشطة:</p>
+              <p className="text-xs font-semibold mb-2 text-foreground/70">{lang === 'ar' ? 'الحجوزات النشطة:' : 'Active Bookings:'}</p>
               <div className="space-y-2">
                 {activeAppointments.slice(0, 3).map((apt: any) => (
                   <div key={apt._id} className="flex items-start gap-2 text-xs">

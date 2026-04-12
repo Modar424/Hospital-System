@@ -29,6 +29,7 @@ const Header = () => {
     { href: '/all-doctors', label: t('nav_doctors') },
     { href: '/about',       label: t('nav_about') },
     { href: '/faq',         label: t('nav_faq') },
+    { href: '/contact',     label: t('nav_contact') },
   ]
 
   // Role-specific dashboard link

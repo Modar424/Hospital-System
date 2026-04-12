@@ -33,7 +33,7 @@ export async function notifyDoctorMessageToSecretary(
   doctorName: string,
   subject: string
 ) {
-  const message = `رسالة من د.${doctorName}: ${subject}`;
+  const message = `رسالة من ${doctorName}: ${subject}`;
 
   return await sendNotification(
     ctx,

@@ -17,6 +17,7 @@ import { toast } from 'sonner'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import MessagePanel from '@/components/MessagePanel'
+import { useI18n } from '@/lib/i18n'
 
 // ── Types ─────────────────────────────────────────────────────────────────
 type NavItem = 'appointments' | 'invoices' | 'reports' | 'messages' | 'profiles' | 'trash'
@@ -151,21 +152,21 @@ function AppointmentRow({
                 {/* Has report badge */}
                 {apt.hasReport ? (
                   <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200 font-medium">
-                    <FileText className="w-3 h-3" /> ✓ تقرير
+                    {lang === 'ar' ? <><FileText className="w-3 h-3" /> ✓ تقرير</> : <><FileText className="w-3 h-3" /> ✓ Report</>}
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 border border-gray-200 font-medium">
-                    <FileText className="w-3 h-3" /> — بلا تقرير
+                    {lang === 'ar' ? <><FileText className="w-3 h-3" /> — بلا تقرير</> : <><FileText className="w-3 h-3" /> — No Report</>}
                   </span>
                 )}
                 {/* Has invoice badge */}
                 {apt.hasInvoice ? (
                   <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200 font-medium">
-                    <FileText className="w-3 h-3" /> فاتورة
+                    {lang === 'ar' ? <><FileText className="w-3 h-3" /> فاتورة</> : <><FileText className="w-3 h-3" /> Invoice</>}
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border font-medium">
-                    <FileText className="w-3 h-3" /> بلا فاتورة
+                    {lang === 'ar' ? <><FileText className="w-3 h-3" /> بلا فاتورة</> : <><FileText className="w-3 h-3" /> No Invoice</>}
                   </span>
                 )}
               </div>
@@ -373,9 +374,9 @@ export default function SecretaryPage() {
   const handleMoveToTrash = (appointmentId: Id<"appointments">) => async () => {
     try {
       await moveAppointmentToTrash({ appointmentId })
-      toast.success('تم نقل الموعد إلى السلة ✓')
+      toast.success(lang === 'ar' ? 'تم نقل الموعد إلى السلة ✓' : 'Appointment moved to trash ✓')
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'فشل نقل الموعد')
+      toast.error(e instanceof Error ? e.message : lang === 'ar' ? 'فشل نقل الموعد' : 'Failed to move appointment')
     }
   }
 
@@ -624,9 +625,9 @@ export default function SecretaryPage() {
                                   onClick={async () => {
                                     try {
                                       await markInvoicePaid({ invoiceId: inv._id })
-                                      toast.success('تم تعليم الفاتورة كمدفوعة ✓')
+                                      toast.success(lang === 'ar' ? 'تم تعليم الفاتورة كمدفوعة ✓' : 'Invoice marked as paid ✓')
                                     } catch (e) {
-                                      toast.error(e instanceof Error ? e.message : 'فشل')
+                                      toast.error(e instanceof Error ? e.message : lang === 'ar' ? 'فشل' : 'Failed')
                                     }
                                   }}
                                   className="text-xs px-2 py-0.5 rounded-full bg-teal-600 text-white hover:bg-teal-700 transition-colors flex items-center gap-1"
@@ -784,7 +785,7 @@ export default function SecretaryPage() {
                           <button
                             onClick={() => {
                               navigator.clipboard.writeText(profile.patientId);
-                              toast.success('تم نسخ ID المريض');
+                              toast.success(lang === 'ar' ? 'تم نسخ معرّف المريض' : 'Patient ID copied');
                             }}
                             className="text-xs px-2 py-1 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
                           >
@@ -795,24 +796,24 @@ export default function SecretaryPage() {
                       <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium',
                         profile.gender === 'male' ? 'bg-blue-100 text-blue-700' :
                         profile.gender === 'female' ? 'bg-pink-100 text-pink-700' : 'bg-gray-100 text-gray-700')}>
-                        {profile.gender === 'male' ? 'ذكر' : profile.gender === 'female' ? 'أنثى' : 'آخر'}
+                        {profile.gender === 'male' ? (lang === 'ar' ? 'ذكر' : 'Male') : profile.gender === 'female' ? (lang === 'ar' ? 'أنثى' : 'Female') : (lang === 'ar' ? 'آخر' : 'Other')}
                       </span>
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div className="bg-muted/50 rounded-lg p-2">
-                        <span className="text-muted-foreground block">فصيلة الدم</span>
+                        {lang === 'ar' ? <span className="text-muted-foreground block">فصيلة الدم</span> : <span className="text-muted-foreground block">Blood Type</span>}
                         <span className="font-semibold text-foreground">{profile.bloodType}</span>
                       </div>
                       <div className="bg-muted/50 rounded-lg p-2">
-                        <span className="text-muted-foreground block">تاريخ الميلاد</span>
+                        {lang === 'ar' ? <span className="text-muted-foreground block">تاريخ الميلاد</span> : <span className="text-muted-foreground block">Date of Birth</span>}
                         <span className="font-semibold text-foreground">{profile.dateOfBirth}</span>
                       </div>
                       <div className="bg-muted/50 rounded-lg p-2">
-                        <span className="text-muted-foreground block">الهاتف</span>
+                        {lang === 'ar' ? <span className="text-muted-foreground block">الهاتف</span> : <span className="text-muted-foreground block">Phone</span>}
                         <span className="font-semibold text-foreground">{profile.phone}</span>
                       </div>
                       <div className="bg-muted/50 rounded-lg p-2">
-                        <span className="text-muted-foreground block">طوارئ</span>
+                        {lang === 'ar' ? <span className="text-muted-foreground block">طوارئ</span> : <span className="text-muted-foreground block">Emergency</span>}
                         <span className="font-semibold text-foreground truncate block">{profile.emergencyContact}</span>
                       </div>
                     </div>
@@ -820,7 +821,7 @@ export default function SecretaryPage() {
                       <div className="mt-3 space-y-1.5">
                         {profile.allergies?.length > 0 && (
                           <div className="flex flex-wrap gap-1">
-                            <span className="text-xs text-muted-foreground ml-1">حساسية:</span>
+                            <span className="text-xs text-muted-foreground ml-1">{lang === 'ar' ? 'حساسية:' : 'Allergies:'}</span>
                             {profile.allergies.map((a: string, idx: number) => (
                               <span key={idx} className="text-xs px-2 py-0.5 bg-red-50 text-red-600 rounded-full border border-red-100">{a}</span>
                             ))}
@@ -828,7 +829,7 @@ export default function SecretaryPage() {
                         )}
                         {profile.medicalHistory?.length > 0 && (
                           <div className="flex flex-wrap gap-1">
-                            <span className="text-xs text-muted-foreground ml-1">تاريخ طبي:</span>
+                            <span className="text-xs text-muted-foreground ml-1">{lang === 'ar' ? 'تاريخ طبي:' : 'Medical History:'}</span>
                             {profile.medicalHistory.map((h: string, idx: number) => (
                               <span key={idx} className="text-xs px-2 py-0.5 bg-amber-50 text-amber-600 rounded-full border border-amber-100">{h}</span>
                             ))}
@@ -851,7 +852,7 @@ export default function SecretaryPage() {
               className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-full font-medium transition-all shadow-lg shadow-violet-500/20"
             >
               <MessageSquare className="w-5 h-5" />
-              فتح لوحة الرسائل
+              {lang === 'ar' ? 'فتح لوحة الرسائل' : 'Open Messages Panel'}
             </button>
           </motion.div>
         )}
@@ -861,12 +862,12 @@ export default function SecretaryPage() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-foreground">سلة المحذوفات</h2>
-                <p className="text-sm text-muted-foreground mt-1">إدارة المواعيد الملغاة والمكتملة والمحذوفة</p>
+                <h2 className="text-2xl font-bold text-foreground">{lang === 'ar' ? 'سلة المحذوفات' : 'Trash'}</h2>
+                <p className="text-sm text-muted-foreground mt-1">{lang === 'ar' ? 'إدارة المواعيد الملغاة والمكتملة' : 'Manage cancelled and completed appointments'}</p>
               </div>
               {cancelled > 0 && (
                 <div className="px-4 py-2 rounded-full bg-red-100 text-red-700 font-semibold">
-                  {cancelled} موعد
+                  {cancelled}
                 </div>
               )}
             </div>
@@ -882,7 +883,7 @@ export default function SecretaryPage() {
                     : 'text-muted-foreground border-transparent hover:text-foreground'
                 )}
               >
-               Completed
+               {lang === 'ar' ? 'المواعيد المكتملة' : 'Completed'}
                 {(cancelledAppointments?.filter(apt => apt.status === 'completed').length ?? 0) > 0 && (
                   <span className="ml-2 px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold">
                     {cancelledAppointments?.filter(apt => apt.status === 'completed').length ?? 0}
@@ -898,7 +899,7 @@ export default function SecretaryPage() {
                     : 'text-muted-foreground border-transparent hover:text-foreground'
                 )}
               >
-               Cancelled
+               {lang === 'ar' ? 'المواعيد الملغاة' : 'Cancelled'}
                 {(cancelledAppointments?.filter(apt => apt.status === 'cancelled').length ?? 0) > 0 && (
                   <span className="ml-2 px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-semibold">
                     {cancelledAppointments?.filter(apt => apt.status === 'cancelled').length ?? 0}
@@ -916,9 +917,9 @@ export default function SecretaryPage() {
                 <div className="text-center">
                   <Trash2 className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-muted-foreground">
-                    {trashTab === 'completed' ? 'لا توجد مواعيد مكتملة' : 'لا توجد مواعيد ملغاة'}
+                    {trashTab === 'completed' ? (lang === 'ar' ? 'لا توجد مواعيد مكتملة' : 'No completed appointments') : (lang === 'ar' ? 'لا توجد مواعيد ملغاة' : 'No cancelled appointments')}
                   </h3>
-                  <p className="text-sm text-muted-foreground mt-1">سلة المحذوفات فارغة</p>
+                  <p className="text-sm text-muted-foreground mt-1">{lang === 'ar' ? 'سلة المحذوفات فارغة' : 'Trash is empty'}</p>
                 </div>
               </motion.div>
             ) : (
@@ -968,21 +969,21 @@ export default function SecretaryPage() {
                                     {/* Has report badge */}
                                     {apt.hasReport ? (
                                       <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200 font-medium">
-                                        <FileText className="w-3 h-3" /> ✓ تقرير
+                                        {lang === 'ar' ? <><FileText className="w-3 h-3" /> ✓ تقرير</> : <><FileText className="w-3 h-3" /> ✓ Report</>}
                                       </span>
                                     ) : (
                                       <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 border border-gray-200 font-medium">
-                                        <FileText className="w-3 h-3" /> — بلا تقرير
+                                        {lang === 'ar' ? <><FileText className="w-3 h-3" /> — بلا تقرير</> : <><FileText className="w-3 h-3" /> — No Report</>}
                                       </span>
                                     )}
                                     {/* Has invoice badge */}
                                     {apt.hasInvoice ? (
                                       <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200 font-medium">
-                                        <FileText className="w-3 h-3" /> فاتورة
+                                        {lang === 'ar' ? <><FileText className="w-3 h-3" /> فاتورة</> : <><FileText className="w-3 h-3" /> Invoice</>}
                                       </span>
                                     ) : (
                                       <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border font-medium">
-                                        <FileText className="w-3 h-3" /> بلا فاتورة
+                                        {lang === 'ar' ? <><FileText className="w-3 h-3" /> بلا فاتورة</> : <><FileText className="w-3 h-3" /> No Invoice</>}
                                       </span>
                                     )}
                                   </div>
@@ -1042,31 +1043,31 @@ export default function SecretaryPage() {
                                             appointmentId: apt._id,
                                             status: trashTab === 'completed' ? 'completed' : ('cancelled' as const)
                                           })
-                                          toast.success('تم استعادة الموعد بنجاح')
+                                          toast.success(lang === 'ar' ? 'تم استعادة الموعد بنجاح' : 'Appointment restored successfully')
                                         } catch {
-                                          toast.error('فشل في استعادة الموعد')
+                                          toast.error(lang === 'ar' ? 'فشل في استعادة الموعد' : 'Failed to restore appointment')
                                         }
                                       }}
                                       className="flex-1 flex items-center justify-center gap-1 text-sm px-3 py-2 rounded-lg bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100 transition-colors font-medium"
                                     >
-                                      <RotateCcw className="w-4 h-4" /> استعادة
+                                      {lang === 'ar' ? <><RotateCcw className="w-4 h-4" /> استعادة</> : <><RotateCcw className="w-4 h-4" /> Restore</>}
                                     </button>
                                     <button
                                       onClick={async () => {
-                                        if (confirm('هل أنت متأكد من حذف هذا الموعد نهائياً؟')) {
+                                        if (confirm(lang === 'ar' ? 'سيتم إخفاء الموعد من عرضك. يمكن للمريض الاستمرار في رؤيته.' : 'This will hide the appointment from your view. The patient can still see it.')) {
                                           try {
                                             await permanentDeleteAppointment({
                                               appointmentId: apt._id
                                             })
-                                            toast.success('تم حذف الموعد نهائياً')
+                                            toast.success(lang === 'ar' ? 'تم إخفاء الموعد من عرضك' : 'Appointment removed from your view')
                                           } catch {
-                                            toast.error('فشل في حذف الموعد')
+                                            toast.error(lang === 'ar' ? 'فشل في إخفاء الموعد' : 'Failed to remove appointment')
                                           }
                                         }
                                       }}
                                       className="flex-1 flex items-center justify-center gap-1 text-sm px-3 py-2 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-colors font-medium"
                                     >
-                                      <Trash2 className="w-4 h-4" /> حذف نهائي
+                                      <Trash2 className="w-4 h-4" /> {lang === 'ar' ? 'إخفاء من العرض' : 'Remove from view'}
                                     </button>
                                   </div>
                                 </div>

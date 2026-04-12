@@ -123,7 +123,7 @@ export function BookAppointmentModal({ doctorId, doctorName, department }: BookA
                 <DialogHeader>
                     <DialogTitle>Book Appointment</DialogTitle>
                     <DialogDescription>
-                        Schedule a visit with Dr. {doctorName}.
+                        Schedule a visit with {doctorName}.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-6 py-4">
@@ -181,9 +181,7 @@ export function BookAppointmentModal({ doctorId, doctorName, department }: BookA
                 </div>
 
                 <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsOpen(false)}>
-                        Cancel
-                    </Button>
+                   
                     <Button 
                         onClick={handleBook} 
                         disabled={!date || !selectedTime || isLoading}

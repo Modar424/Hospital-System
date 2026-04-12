@@ -68,6 +68,9 @@ export default defineSchema({
         notes: v.optional(v.string()),
         reportId: v.optional(v.id("reports")), // ربط التقرير الطبي بالموعد
         trashedAt: v.optional(v.number()), // timestamp عندما تم نقل الموعد إلى الـ Trash
+        deletedByDoctorId: v.optional(v.id("doctors")),   // الطبيب الذي حذفه محلياً
+        deletedBySecretaryId: v.optional(v.id("patients")), // السكرتيرة التي حذفته محلياً
+        deletedByUserIds: v.optional(v.array(v.string())), // Legacy field - will be migrated
     })
         .index("by_doctor", ["doctorId"])
         .index("by_patient", ["patientId"])

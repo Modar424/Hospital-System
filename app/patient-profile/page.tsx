@@ -13,6 +13,7 @@ import { useState } from "react"
 import { toast } from "sonner"
 import Link from "next/link"
 import { SignInButton } from "@clerk/nextjs"
+import { useI18n } from "@/lib/i18n"
 
 type Gender = "male" | "female" | "other"
 
@@ -41,11 +42,13 @@ export default function PatientProfileSetupPage() {
   const [newMedical, setNewMedical] = useState("")
   const [newAllergy, setNewAllergy] = useState("")
 
+  const { t, lang } = useI18n()
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        toast.error("حجم الصورة يجب أن يكون أقل من 5 MB")
+        toast.error(lang === 'ar' ? 'حجم الصورة يجب أن يكون أقل من 5 MB' : 'Image size must be less than 5 MB')
         return
       }
 
@@ -95,7 +98,7 @@ export default function PatientProfileSetupPage() {
 
   const handleSubmit = async () => {
     if (!formData.phone || !formData.dateOfBirth || !formData.address) {
-      toast.error("يرجى ملء جميع الحقول المطلوبة")
+      toast.error(lang === 'ar' ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields')
       return
     }
 
@@ -113,10 +116,10 @@ export default function PatientProfileSetupPage() {
         profileImage: profileImage || undefined,
         notes: formData.notes,
       })
-      toast.success("تم حفظ ملفك الشخصي بنجاح!")
+      toast.success(lang === 'ar' ? 'تم حفظ ملفك الشخصي بنجاح!' : 'Profile saved successfully!')
       setStep(3)
     } catch (e) {
-      toast.error("حدث خطأ في حفظ الملف")
+      toast.error(lang === 'ar' ? 'حدث خطأ في حفظ الملف' : 'Error saving profile')
     } finally {
       setLoading(false)
     }
@@ -133,13 +136,13 @@ export default function PatientProfileSetupPage() {
           <div className="w-24 h-24 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center mx-auto mb-6">
             <FileText className="w-12 h-12 text-blue-600" />
           </div>
-          <h2 className="text-2xl font-bold mb-2">سجّل دخولك أولاً</h2>
+          <h2 className="text-2xl font-bold mb-2">{lang === 'ar' ? 'سجّل دخولك أولاً' : 'Sign in first'}</h2>
           <p className="text-muted-foreground mb-8">
-            تحتاج إلى تسجيل الدخول لإعداد ملفك الشخصي
+            {lang === 'ar' ? 'تحتاج إلى تسجيل الدخول لإعداد ملفك الشخصي' : 'You need to sign in to set up your profile'}
           </p>
           <SignInButton mode="modal">
             <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-8">
-              تسجيل الدخول
+              {lang === 'ar' ? 'تسجيل الدخول' : 'Sign In'}
             </Button>
           </SignInButton>
         </motion.div>
@@ -162,22 +165,22 @@ export default function PatientProfileSetupPage() {
               </div>
             </div>
 
-            <h1 className="text-3xl font-bold text-center mb-2">ملفك الشخصي جاهز!</h1>
+            <h1 className="text-3xl font-bold text-center mb-2">{lang === 'ar' ? 'ملفك الشخصي جاهز!' : 'Your profile is ready!'}</h1>
             <p className="text-center text-muted-foreground mb-8">
-              تم تحديث جميع بيانات ملفك الطبي
+              {lang === 'ar' ? 'تم تحديث جميع بيانات ملفك الطبي' : 'All your medical data has been updated'}
             </p>
 
             <div className="bg-muted/50 rounded-xl p-6 mb-8 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">الهاتف:</span>
+                <span className="text-muted-foreground">{lang === 'ar' ? 'الهاتف:' : 'Phone:'}</span>
                 <span className="font-medium">{myProfile.phone}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">تاريخ الميلاد:</span>
+                <span className="text-muted-foreground">{lang === 'ar' ? 'تاريخ الميلاد:' : 'Date of Birth:'}</span>
                 <span className="font-medium">{myProfile.dateOfBirth}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">فصيلة الدم:</span>
+                <span className="text-muted-foreground">{lang === 'ar' ? 'فصيلة الدم:' : 'Blood Type:'}</span>
                 <span className="font-medium">{myProfile.bloodType}</span>
               </div>
             </div>
@@ -186,7 +189,7 @@ export default function PatientProfileSetupPage() {
               <Link href="/appointments" className="block">
                 <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-full gap-2 py-6 text-lg">
                   <ArrowRight className="w-5 h-5" />
-                  اذهب إلى حجز الموعد
+                  {lang === 'ar' ? 'اذهب إلى حجز الموعد' : 'Go to Book Appointment'}
                 </Button>
               </Link>
 
@@ -196,7 +199,7 @@ export default function PatientProfileSetupPage() {
                 onClick={() => setStep(2)}
               >
                 <FileText className="w-5 h-5" />
-                تحديث البيانات
+                {lang === 'ar' ? 'تحديث البيانات' : 'Update Profile'}
               </Button>
             </div>
           </motion.div>
@@ -237,12 +240,12 @@ export default function PatientProfileSetupPage() {
 
           <div className="flex justify-between">
             <div>
-              <h3 className="font-semibold">البيانات الشخصية</h3>
-              <p className="text-sm text-muted-foreground">معلومات أساسية</p>
+              <h3 className="font-semibold">{lang === 'ar' ? 'البيانات الشخصية' : 'Personal Info'}</h3>
+              <p className="text-sm text-muted-foreground">{lang === 'ar' ? 'معلومات أساسية' : 'Basic information'}</p>
             </div>
             <div>
-              <h3 className="font-semibold">التاريخ الطبي</h3>
-              <p className="text-sm text-muted-foreground">سجلك الطبي</p>
+              <h3 className="font-semibold">{lang === 'ar' ? 'التاريخ الطبي' : 'Medical History'}</h3>
+              <p className="text-sm text-muted-foreground">{lang === 'ar' ? 'سجلك الطبي' : 'Your medical record'}</p>
             </div>
           </div>
         </div>
@@ -256,12 +259,12 @@ export default function PatientProfileSetupPage() {
           >
             <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
               <User className="w-6 h-6 text-blue-600" />
-              البيانات الشخصية الأساسية
+              {lang === 'ar' ? 'البيانات الشخصية الأساسية' : 'Basic Personal Data'}
             </h2>
 
             {/* Profile Image */}
             <div className="mb-8">
-              <label className="block text-sm font-semibold mb-4">صورتك الشخصية</label>
+              <label className="block text-sm font-semibold mb-4">{lang === 'ar' ? 'صورتك الشخصية' : 'Profile Photo'}</label>
               <div className="flex gap-4 items-start">
                 {imagePreview ? (
                   <div className="relative">
@@ -293,10 +296,10 @@ export default function PatientProfileSetupPage() {
                 )}
                 <div>
                   <p className="text-sm text-muted-foreground mb-2">
-                    صورة واضحة وحديثة (اختياري)
+                    {lang === 'ar' ? 'صورة واضحة وحديثة (اختياري)' : 'Clear recent photo (optional)'}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    الحد الأقصى 5 MB
+                    {lang === 'ar' ? 'الحد الأقصى 5 MB' : 'Max 5 MB'}
                   </p>
                 </div>
               </div>
@@ -307,7 +310,7 @@ export default function PatientProfileSetupPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Phone */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">رقم الهاتف *</label>
+                  <label className="block text-sm font-medium mb-2">{lang === 'ar' ? 'رقم الهاتف *' : 'Phone Number *'}</label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input
@@ -322,7 +325,7 @@ export default function PatientProfileSetupPage() {
 
                 {/* Date of Birth */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">تاريخ الميلاد *</label>
+                  <label className="block text-sm font-medium mb-2">{lang === 'ar' ? 'تاريخ الميلاد *' : 'Date of Birth *'}</label>
                   <div className="relative">
                     <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input
@@ -336,21 +339,21 @@ export default function PatientProfileSetupPage() {
 
                 {/* Gender */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">الجنس</label>
+                  <label className="block text-sm font-medium mb-2">{lang === 'ar' ? 'الجنس' : 'Gender'}</label>
                   <select
                     value={formData.gender}
                     onChange={(e) => setFormData({ ...formData, gender: e.target.value as Gender })}
                     className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-blue-600/30"
                   >
-                    <option value="male">ذكر</option>
-                    <option value="female">أنثى</option>
-                    <option value="other">آخر</option>
+                    <option value="male">{lang === 'ar' ? 'ذكر' : 'Male'}</option>
+                    <option value="female">{lang === 'ar' ? 'أنثى' : 'Female'}</option>
+                    <option value="other">{lang === 'ar' ? 'آخر' : 'Other'}</option>
                   </select>
                 </div>
 
                 {/* Blood Type */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">فصيلة الدم</label>
+                  <label className="block text-sm font-medium mb-2">{lang === 'ar' ? 'فصيلة الدم' : 'Blood Type'}</label>
                   <div className="relative">
                     <Droplets className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <select
@@ -372,14 +375,14 @@ export default function PatientProfileSetupPage() {
 
                 {/* Address */}
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium mb-2">العنوان *</label>
+                  <label className="block text-sm font-medium mb-2">{lang === 'ar' ? 'العنوان *' : 'Address *'}</label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input
                       type="text"
                       value={formData.address}
                       onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                      placeholder="المدينة، الحي، الشارع"
+                      placeholder={lang === 'ar' ? 'المدينة، الحي، الشارع' : 'City, District, Street'}
                       className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-blue-600/30"
                     />
                   </div>
@@ -387,14 +390,14 @@ export default function PatientProfileSetupPage() {
 
                 {/* Emergency Contact */}
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium mb-2">جهة اتصال طوارئ</label>
+                  <label className="block text-sm font-medium mb-2">{lang === 'ar' ? 'جهة اتصال طوارئ' : 'Emergency Contact'}</label>
                   <div className="relative">
                     <AlertCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input
                       type="tel"
                       value={formData.emergencyContact}
                       onChange={(e) => setFormData({ ...formData, emergencyContact: e.target.value })}
-                      placeholder="رقم الهاتف والاسم"
+                      placeholder={lang === 'ar' ? 'رقم الهاتف والاسم' : 'Phone number and name'}
                       className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-blue-600/30"
                     />
                   </div>
@@ -407,7 +410,7 @@ export default function PatientProfileSetupPage() {
                   onClick={() => setStep(2)}
                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-full gap-2"
                 >
-                  التالي
+                  {lang === 'ar' ? 'التالي' : 'Next'}
                   <ArrowRight className="w-4 h-4" />
                 </Button>
               </div>
@@ -424,7 +427,7 @@ export default function PatientProfileSetupPage() {
           >
             <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
               <Heart className="w-6 h-6 text-red-600" />
-              التاريخ الطبي
+              {lang === 'ar' ? 'التاريخ الطبي' : 'Medical History'}
             </h2>
 
             <div className="space-y-8">
@@ -432,7 +435,7 @@ export default function PatientProfileSetupPage() {
               <div>
                 <label className="block text-sm font-semibold mb-4 flex items-center gap-2">
                   <Shield className="w-4 h-4" />
-                  الحالات الطبية السابقة
+                  {lang === 'ar' ? 'الحالات الطبية السابقة' : 'Previous Medical Conditions'}
                 </label>
                 <div className="flex gap-2 mb-4">
                   <input
@@ -440,14 +443,14 @@ export default function PatientProfileSetupPage() {
                     value={newMedical}
                     onChange={(e) => setNewMedical(e.target.value)}
                     onKeyPress={(e) => e.key === "Enter" && addMedicalHistory()}
-                    placeholder="مثال: ارتفاع ضغط الدم"
+                    placeholder={lang === 'ar' ? 'مثال: ارتفاع ضغط الدم' : 'e.g. Hypertension'}
                     className="flex-1 px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-blue-600/30"
                   />
                   <Button
                     onClick={addMedicalHistory}
                     className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
                   >
-                    إضافة
+                    {lang === 'ar' ? 'إضافة' : 'Add'}
                   </Button>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -469,7 +472,7 @@ export default function PatientProfileSetupPage() {
               <div>
                 <label className="block text-sm font-semibold mb-4 flex items-center gap-2">
                   <AlertCircle className="w-4 h-4" />
-                  الحساسيات والأدوية المحظورة
+                  {lang === 'ar' ? 'الحساسيات والأدوية المحظورة' : 'Allergies & Banned Medications'}
                 </label>
                 <div className="flex gap-2 mb-4">
                   <input
@@ -477,14 +480,14 @@ export default function PatientProfileSetupPage() {
                     value={newAllergy}
                     onChange={(e) => setNewAllergy(e.target.value)}
                     onKeyPress={(e) => e.key === "Enter" && addAllergy()}
-                    placeholder="مثال: البنسلين"
+                    placeholder={lang === 'ar' ? 'مثال: البنسلين' : 'e.g. Penicillin'}
                     className="flex-1 px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-red-600/30"
                   />
                   <Button
                     onClick={addAllergy}
                     className="bg-red-600 hover:bg-red-700 text-white rounded-xl"
                   >
-                    إضافة
+                    {lang === 'ar' ? 'إضافة' : 'Add'}
                   </Button>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -504,11 +507,11 @@ export default function PatientProfileSetupPage() {
 
               {/* Additional Notes */}
               <div>
-                <label className="block text-sm font-semibold mb-2">ملاحظات إضافية</label>
+                <label className="block text-sm font-semibold mb-2">{lang === 'ar' ? 'ملاحظات إضافية' : 'Additional Notes'}</label>
                 <textarea
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder="أي معلومات طبية أخرى مهمة..."
+                  placeholder={lang === 'ar' ? 'أي معلومات طبية أخرى مهمة...' : 'Any other important medical information...'}
                   rows={4}
                   className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-blue-600/30 resize-none"
                 />
@@ -521,14 +524,14 @@ export default function PatientProfileSetupPage() {
                   onClick={() => setStep(1)}
                   className="flex-1 rounded-full"
                 >
-                  السابق
+                  {lang === 'ar' ? 'السابق' : 'Back'}
                 </Button>
                 <Button
                   onClick={handleSubmit}
                   disabled={loading}
                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-full"
                 >
-                  {loading ? "جاري الحفظ..." : "حفظ البيانات"}
+                  {loading ? (lang === 'ar' ? 'جاري الحفظ...' : 'Saving...') : (lang === 'ar' ? 'حفظ البيانات' : 'Save Profile')}
                 </Button>
               </div>
             </div>
@@ -551,15 +554,15 @@ export default function PatientProfileSetupPage() {
               <CheckCircle2 className="w-12 h-12 text-green-600" />
             </motion.div>
 
-            <h2 className="text-3xl font-bold mb-2">تم بنجاح!</h2>
+            <h2 className="text-3xl font-bold mb-2">{lang === 'ar' ? 'تم بنجاح!' : 'Success!'}</h2>
             <p className="text-muted-foreground mb-8">
-              تم حفظ ملفك الشخصي بنجاح. يمكنك الآن حجز موعد مع الأطباء.
+              {lang === 'ar' ? 'تم حفظ ملفك الشخصي بنجاح. يمكنك الآن حجز موعد مع الأطباء.' : 'Your profile has been saved. You can now book appointments with doctors.'}
             </p>
 
             <Link href="/appointments" className="block">
               <Button className="w-full bg-green-600 hover:bg-green-700 text-white rounded-full gap-2 py-6 text-lg mb-4">
                 <ArrowRight className="w-5 h-5" />
-                اذهب إلى حجز الموعد
+                {lang === 'ar' ? 'اذهب إلى حجز الموعد' : 'Go to Book Appointment'}
               </Button>
             </Link>
 
@@ -568,7 +571,7 @@ export default function PatientProfileSetupPage() {
               onClick={() => setStep(2)}
               className="w-full rounded-full"
             >
-              تحديث البيانات
+              {lang === 'ar' ? 'تحديث البيانات' : 'Update Profile'}
             </Button>
           </motion.div>
         )}

@@ -91,8 +91,8 @@ function Categories() {
                   whileInView={{ opacity: 1, y: 0, scale: 1 }}
                   transition={{ delay: index * 0.06, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
                   viewport={{ once: true }}
-                  whileHover={{ y: -6, scale: 1.05, transition: { duration: 0.25 } }}
-                  className="group shrink-0 w-44 p-6 bg-card border border-border rounded-2xl hover:border-primary/60 hover:bg-primary/5 dark:hover:bg-primary/10 transition-all duration-300 cursor-pointer flex flex-col items-center text-center gap-3"
+                  whileHover={{ y: 4, scale: 1.05, transition: { duration: 0.25 } }}
+                  className="group shrink-0 w-40 p-6 bg-card border border-border rounded-2xl hover:border-primary/60 hover:bg-primary/5 dark:hover:bg-primary/10 transition-all duration-300 cursor-pointer flex flex-col items-center text-center gap-3"
                   style={{ scrollSnapAlign: 'start', boxShadow: '0 2px 12px -3px rgb(13 148 136 / 0.06)' }}
                 >
                   <motion.div
@@ -122,8 +122,8 @@ function Categories() {
             <ChevronRight className="w-5 h-5" />
           </motion.button>
 
-          <div className="absolute left-0 top-0 bottom-2 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
-          <div className="absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />
+          <div className="absolute left-0 top-0 bottom-2 w-8 bg-linear-to-r from-background to-transparent pointer-events-none z-10" />
+          <div className="absolute right-0 top-0 bottom-2 w-8 bg-linear-to-l from-background to-transparent pointer-events-none z-10" />
         </div>
       </div>
     </section>

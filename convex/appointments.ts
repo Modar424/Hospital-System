@@ -284,11 +284,16 @@ export const myAppointments = query({
             .withIndex("by_patient", (q) => q.eq("patientId", patient._id))
             .collect();
 
-        // تصفية المواعيد المنقولة للـ Trash
-        const activeAppointments = appointments.filter((apt) => !apt.trashedAt);
+        // المريض يرى جميع مواعيده بما فيها المكتملة والملغاة (حتى لو نقلها الموظف للسلة)
+        // فقط نخفي المواعيد المعلقة/المؤكدة التي في السلة
+        const visibleAppointments = appointments.filter((apt) => {
+            if (!apt.trashedAt) return true; // ليست في السلة - اعرضها
+            // في السلة - اعرضها للمريض إذا كانت مكتملة أو ملغاة
+            return apt.status === "completed" || apt.status === "cancelled";
+        });
 
         return Promise.all(
-            activeAppointments.map(async (app) => {
+            visibleAppointments.map(async (app) => {
                 const doctor = app.doctorId ? await ctx.db.get(app.doctorId) : null;
                 // هل يوجد تقرير لهذا الموعد؟
                 const report = await ctx.db

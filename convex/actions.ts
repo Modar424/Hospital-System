@@ -4,6 +4,16 @@ import { Resend } from "resend";
 import OpenAI from "openai";
 import { api } from "./_generated/api";
 
+// Type definitions
+interface Medication {
+    name: string;
+    nameAr?: string;
+    price: number;
+    available: boolean;
+    description?: string;
+    category?: string;
+}
+
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // إعداد عميل OpenRouter
@@ -26,6 +36,50 @@ const FREE_MODELS = [
     "google/gemini-3.1-flash-lite-preview:free"
 ];
 
+// دالة لتصفية الردود وضمان نقاء اللغة
+function purifyLanguageResponse(response: string, isArabic: boolean): string {
+    if (isArabic) {
+        // Keep only Arabic text and digits
+        // Remove any non-Arabic, non-digit, non-punctuation characters
+        // Arabic block: U+0600-U+06FF
+        // Keep emojis and basic punctuation
+        let purified = "";
+        for (const char of response) {
+            const code = char.charCodeAt(0);
+            // Arabic characters (U+0600-U+06FF)
+            const isArabicChar = code >= 0x0600 && code <= 0x06FF;
+            // Arabic extensions (U+0750-U+077F)
+            const isArabicExt = code >= 0x0750 && code <= 0x077F;
+            // Latin digits (0-9)
+            const isLatinDigit = code >= 0x0030 && code <= 0x0039;
+            // Arabic-Indic digits (٠-٩)
+            const isArabicDigit = code >= 0x0660 && code <= 0x0669;
+            // Common punctuation and spaces
+            const isCommon = " .,;:!؟'ـــ\n☑✓✓✔🏥📌١٢٣٤٥٦٧٨٩٠".includes(char);
+            
+            if (isArabicChar || isArabicExt || isLatinDigit || isArabicDigit || isCommon) {
+                purified += char;
+            }
+        }
+        return purified;
+    } else {
+        // For English: remove Arabic text but keep English
+        let purified = "";
+        for (const char of response) {
+            const code = char.charCodeAt(0);
+            // Remove Arabic characters (U+0600-U+06FF and U+0750-U+077F)
+            const isArabicChar = (code >= 0x0600 && code <= 0x06FF) || 
+                                (code >= 0x0750 && code <= 0x077F);
+            
+            if (!isArabicChar) {
+                purified += char;
+            }
+        }
+        // Clean up excessive whitespace from removed Arabic
+        return purified.replace(/\n\n\n+/g, '\n\n').trim();
+    }
+}
+
 export const chat = action({
     args: {
         message: v.string(),
@@ -45,29 +99,70 @@ export const chat = action({
             throw new Error("Unauthenticated");
         }
 
-        // 2. Fetch user's appointments to give AI context
-        // الكود الجديد (المعدل)
+        // 2. Detect the language of the user's message FIRST
+        const arabicRegex = /[\u0600-\u06FF]/;
+        const isArabic = arabicRegex.test(args.message);
+
+        // 3. Fetch user's appointments to give AI context
+        // Arabic numerals mapping
+        const arabicNumerals = ['١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩', '١٠'];
+
 let appointmentContext = "";
 try {
     const appointments = await ctx.runQuery(api.appointments.myAppointments, {});
     if (appointments && appointments.length > 0) {
-        appointmentContext = "User's Appointments:\n" + appointments.map(app => {
+        // English format
+        let appointmentTextEn = "📅 Your Appointments:\n\n";
+        appointments.forEach((app, index) => {
             const date = new Date(app.date);
             const formattedDate = date.toLocaleDateString('en-US', {
                 year: 'numeric',
-                month: 'long',
+                month: 'short',
                 day: 'numeric'
             });
             const formattedTime = date.toLocaleTimeString('en-US', {
                 hour: '2-digit',
-                minute: '2-digit'
+                minute: '2-digit',
+                hour12: true
             });
-            const doctorName = app.doctor?.name || 'to be assigned';
+            const doctorName = app.doctor?.name || 'To be assigned';
+            const statusLabel = app.status === 'confirmed' ? '✅ Confirmed' : 
+                              app.status === 'pending' ? '⏳ Pending' :
+                              app.status === 'cancelled' ? '❌ Cancelled' : app.status;
             
-            return `- ${formattedDate} at ${formattedTime} with Dr. ${doctorName} (${app.status})`;
-        }).join("\n");
+            appointmentTextEn += `${index + 1}) ${doctorName} | ${formattedDate} | ${formattedTime} | ${statusLabel}`;
+            if (index < appointments.length - 1) appointmentTextEn += "\n\n";
+        });
+
+        // Arabic format
+        let appointmentTextAr = "📅 مواعيدك:\n\n";
+        appointments.forEach((app, index) => {
+            const date = new Date(app.date);
+            const formattedDate = date.toLocaleDateString('ar-SA', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+            const formattedTime = date.toLocaleTimeString('ar-SA', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+            const doctorName = app.doctor?.name || 'سيتم تحديده';
+            const statusLabel = app.status === 'confirmed' ? '✅ مؤكد' :
+                              app.status === 'pending' ? '⏳ قيد الانتظار' :
+                              app.status === 'cancelled' ? '❌ ملغي' : app.status;
+            
+            const arabicNum = arabicNumerals[index] || `${index + 1}`;
+            appointmentTextAr += `${arabicNum}) ${doctorName} | ${formattedDate} | ${formattedTime} | ${statusLabel}`;
+            if (index < appointments.length - 1) appointmentTextAr += "\n\n";
+        });
+
+        appointmentContext = isArabic ? appointmentTextAr : appointmentTextEn;
     } else {
-        appointmentContext = "User has no upcoming appointments.";
+        appointmentContext = isArabic 
+            ? "📅 لا توجد مواعيد قادمة لديك."
+            : "📅 You have no upcoming appointments.";
     }
 } catch (e) {
     console.error("Failed to fetch appointments for AI context", e);
@@ -78,12 +173,54 @@ try {
         try {
             const medications = await ctx.runQuery(api.pharmacy.get, {});
             if (medications && medications.length > 0) {
-                pharmacyContext = "\nAvailable Medications in our Pharmacy:\n" + medications.map((med: any) => {
-                    const availability = med.available ? "✅ Available" : "❌ Out of Stock";
-                    const arabicName = med.nameAr ? ` (${med.nameAr})` : "";
-                    const category = med.category ? ` [${med.category}]` : "";
-                    return `- ${med.name}${arabicName}${category}: ${med.price} SAR — ${availability}${med.description ? ` — ${med.description}` : ""}`;
-                }).join("\n");
+                // Group medications by category for better organization
+                const medicationsByCategory = medications.reduce((acc: Record<string, Medication[]>, med: Medication) => {
+                    const cat = med.category || "Other";
+                    if (!acc[cat]) acc[cat] = [];
+                    acc[cat].push(med);
+                    return acc;
+                }, {} as Record<string, Medication[]>);
+
+                // Arabic numerals mapping
+                const arabicNumerals = ['١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩', '١٠', 
+                                       '١١', '١٢', '١٣', '١٤', '١٥', '١٦', '١٧', '١٨', '١٩', '٢٠'];
+
+                let pharmText = "\n🏥 Available Medications in our Pharmacy:\n\n";
+                
+                Object.entries(medicationsByCategory).forEach(([category, meds]: [string, Medication[]]) => {
+                    pharmText += `📌 ${category}:\n`;
+                    
+                    meds.forEach((med: Medication, index: number) => {
+                        const availability = med.available ? "✅ Available" : "❌ Out of Stock";
+                        const arabicName = med.nameAr ? ` (${med.nameAr})` : "";
+                        const desc = med.description ? ` • ${med.description}` : "";
+                        
+                        // Professional single-line format without extra separators
+                        pharmText += `${index + 1}) ${med.name}${arabicName} | ${med.price} SAR | ${availability}${desc}\n`;
+                    });
+                    pharmText += "\n";
+                });
+                
+                // Arabic version with Arabic numerals
+                let pharmTextAr = "\n🏥 الأدوية المتوفرة في صيدلية HealWell:\n\n";
+                
+                Object.entries(medicationsByCategory).forEach(([category, meds]: [string, Medication[]]) => {
+                    pharmTextAr += `📌 ${category}:\n`;
+                    
+                    meds.forEach((med: Medication, index: number) => {
+                        const availability = med.available ? "✅ متوفر" : "❌ غير متوفر";
+                        const englishName = med.name ? ` (${med.name})` : "";
+                        const desc = med.description ? ` • ${med.description}` : "";
+                        
+                        // Arabic format with Arabic numerals
+                        const arabicNum = arabicNumerals[index] || `${index + 1}`;
+                        pharmTextAr += `${arabicNum}) ${med.nameAr || med.name}${englishName} | ${med.price} ريال | ${availability}${desc}\n`;
+                    });
+                    pharmTextAr += "\n";
+                });
+                
+                // Detect language and use appropriate format
+                pharmacyContext = isArabic ? pharmTextAr : pharmText;
             }
         } catch (e) {
             console.error("Failed to fetch pharmacy data for AI context", e);
@@ -93,7 +230,32 @@ try {
 You can help users check their appointments, find doctors, get general medical info, and check medication availability and prices.
 Important: You are not a doctor. Do not give medical diagnoses. Always advise users to consult their doctor before taking any medication.
 If asked about appointments, you have access to their list below.
-If asked about medications, prices, or availability, use the pharmacy data below.
+
+**LANGUAGE PURITY RULE - VERY IMPORTANT:**
+${isArabic 
+  ? `🇸🇦 اللغة: عربي فقط
+- اجب باللغة العربية بشكل كامل 100%
+- لا تستخدم أي كلمات إنجليزية على الإطلاق
+- لا استثناءات، حتى للأسماء الدوائية - ترجمها كاملة أو استخدم الاسم العربي فقط
+- تجنب أي أحرف أو كلمات غير عربية
+- تأكد من النقاء الكامل للغة العربية`
+  : `🇬🇧 LANGUAGE: English Only
+- Respond entirely in English - 100% English only
+- Do NOT use any Arabic words whatsoever
+- No exceptions, use only English equivalents
+- Maintain complete linguistic purity
+- Avoid any Arabic or foreign characters`
+}
+
+**MEDICATION RESPONSE FORMAT:**
+When answering about medications, FORMAT the response clearly with numbered lists:
+${isArabic
+  ? `١) اسم الدواء | السعر | الحالة | الوصف
+٢) دواء آخر | السعر | الحالة | الوصف`
+  : `1) Medication Name | Price | Status | Description
+2) Another Medication | Price | Status | Description`
+}
+
 Current user: ${identity.name || "Guest"}.
 
 ${appointmentContext}
@@ -114,7 +276,9 @@ ${pharmacyContext}
                     messages: messages,
                 });
                 console.log(`Success with model: ${model}`);
-                return completion.choices[0].message.content;
+                const rawResponse = completion.choices[0].message.content;
+                const purifiedResponse = purifyLanguageResponse(rawResponse || "", isArabic);
+                return purifiedResponse;
             } catch (error) {
                 console.log(`Model ${model} failed:`, error);
                 continue;
@@ -147,7 +311,7 @@ export const sendAppointmentConfirmationEmail = internalAction({
                 html: `
                     <h1>Appointment Confirmed</h1>
                     <p>Dear ${args.patientName},</p>
-                    <p>Your appointment with <strong>Dr. ${args.doctorName}</strong> has been confirmed.</p>
+                    <p>Your appointment with <strong>${args.doctorName}</strong> has been confirmed.</p>
                     <p><strong>Date & Time:</strong> ${args.date}</p>
                     <p>Please arrive 15 minutes early.</p>
                     <p>Reference ID: ${args.appointmentId}</p>

@@ -9,6 +9,7 @@ import {
   Eye, EyeOff, Trash2, RotateCcw, Inbox
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useI18n } from '@/lib/i18n'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -30,7 +31,9 @@ interface AdminNotificationsProps {
   onClose: () => void
 }
 
-export default function AdminNotificationsPanel({ isOpen, onClose }: AdminNotificationsProps) {
+export default function AdminNotificationsPanel({
+  isOpen, onClose }: AdminNotificationsProps) {
+  const { lang } = useI18n()
   const allNotifications = useQuery(api.adminNotifications.getAdminNotifications) as AdminNotification[] | undefined
   const trashItems = useQuery(api.trash.getAdminTrash) as AdminNotification[] | undefined
   const markAsRead = useMutation(api.adminNotifications.markAdminNotificationAsRead)
@@ -108,7 +111,7 @@ export default function AdminNotificationsPanel({ isOpen, onClose }: AdminNotifi
                 <Bell className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="font-bold text-lg">إشعارات الأدمن</h2>
+                <h2 className="font-bold text-lg">{lang === 'ar' ? 'إشعارات الأدمن' : 'Admin Notifications'}</h2>
                 <p className="text-sm text-slate-300">
                   {activeTab === 'inbox'
                     ? (unreadCount ? `${unreadCount} غير مقروء` : "لا توجد إشعارات جديدة")
@@ -212,8 +215,8 @@ export default function AdminNotificationsPanel({ isOpen, onClose }: AdminNotifi
                     <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
                       <Bell className="w-8 h-8 text-muted-foreground" />
                     </div>
-                    <h3 className="font-semibold text-foreground mb-1">لا توجد إشعارات</h3>
-                    <p className="text-sm text-muted-foreground">الإشعارات المالية والفواتير المدفوعة ستظهر هنا</p>
+                    <h3 className="font-semibold text-foreground mb-1">{lang === 'ar' ? 'لا توجد إشعارات' : 'No notifications'}</h3>
+                    <p className="text-sm text-muted-foreground">{lang === 'ar' ? 'الإشعارات المالية والفواتير المدفوعة ستظهر هنا' : 'Financial notifications and paid invoices will appear here'}</p>
                   </div>
                 )}
               </>
@@ -260,8 +263,8 @@ export default function AdminNotificationsPanel({ isOpen, onClose }: AdminNotifi
                     <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
                       <Trash2 className="w-8 h-8 text-muted-foreground" />
                     </div>
-                    <h3 className="font-semibold text-foreground mb-1">سلة المحذوفات فارغة</h3>
-                    <p className="text-sm text-muted-foreground">العناصر المحذوفة ستظهر هنا</p>
+                    <h3 className="font-semibold text-foreground mb-1">{lang === 'ar' ? 'سلة المحذوفات فارغة' : 'Trash is empty'}</h3>
+                    <p className="text-sm text-muted-foreground">{lang === 'ar' ? 'العناصر المحذوفة ستظهر هنا' : 'Deleted items will appear here'}</p>
                   </div>
                 )}
               </>

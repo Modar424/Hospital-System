@@ -27,6 +27,7 @@ import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import AdminNotificationsPanel from '@/components/AdminNotificationsPanel'
 import { FileText } from 'lucide-react'
+import { useI18n } from '@/lib/i18n'
 
 type NavItem = 'dashboard' | 'doctors' | 'users' | 'notify' | 'pharmacy' | 'reports'
 type Role = 'admin' | 'guest' | 'doctor' | 'secretary'
@@ -39,6 +40,7 @@ const roleConfig: Record<Role, { label: string; color: string }> = {
 }
 
 export default function AdminDashboardPage() {
+  const { lang, t } = useI18n()
   const appointments  = useQuery(api.appointments.getAppointments)
   const doctors       = useQuery(api.doctors.getDoctors)
   const allUsers      = useQuery(api.patients.getAllUsers)
@@ -78,18 +80,18 @@ export default function AdminDashboardPage() {
   const adminCount = allUsers?.filter(u => u.role === 'admin').length ?? 0
 
   const statCards = [
-    { label: 'Total Patients',    value: totalPatients, icon: Users,      color: 'text-primary',     bg: 'bg-primary/10'  },
-    { label: "Today's Patients",  value: todayPatients, icon: UserCheck,  color: 'text-blue-600',    bg: 'bg-blue-100 dark:bg-blue-950/40'    },
-    { label: "Today's Appts",     value: todayAppts,    icon: Clock,      color: 'text-amber-600',   bg: 'bg-amber-100 dark:bg-amber-950/40'  },
-    { label: 'Total Doctors',     value: doctors?.length ?? 0, icon: Stethoscope, color: 'text-violet-600', bg: 'bg-violet-100 dark:bg-violet-950/40' },
+    { label: lang === 'ar' ? 'إجمالي المرضى' : 'Total Patients',    value: totalPatients, icon: Users,      color: 'text-primary',     bg: 'bg-primary/10'  },
+    { label: lang === 'ar' ? 'مرضى اليوم' : "Today's Patients",  value: todayPatients, icon: UserCheck,  color: 'text-blue-600',    bg: 'bg-blue-100 dark:bg-blue-950/40'    },
+    { label: lang === 'ar' ? 'المواعيد اليوم' : "Today's Appts",     value: todayAppts,    icon: Clock,      color: 'text-amber-600',   bg: 'bg-amber-100 dark:bg-amber-950/40'  },
+    { label: lang === 'ar' ? 'إجمالي الأطباء' : 'Total Doctors',     value: doctors?.length ?? 0, icon: Stethoscope, color: 'text-violet-600', bg: 'bg-violet-100 dark:bg-violet-950/40' },
   ]
 
   const navItems: { key: NavItem; label: string; icon: React.ElementType }[] = [
-    { key: 'dashboard', label: 'Dashboard',          icon: LayoutDashboard },
-    { key: 'doctors',   label: 'Doctors',            icon: Stethoscope     },
-    { key: 'users',     label: 'Users & Roles',      icon: ShieldCheck     },
-    { key: 'notify',    label: 'Send Notification',  icon: Bell            },
-    { key: 'reports',   label: 'Reports & Notifs',   icon: FileText        },
+    { key: 'dashboard', label: lang === 'ar' ? 'لوحة البيانات' : 'Dashboard',          icon: LayoutDashboard },
+    { key: 'doctors',   label: lang === 'ar' ? 'الأطباء' : 'Doctors',            icon: Stethoscope     },
+    { key: 'users',     label: lang === 'ar' ? 'المستخدمون والأدوار' : 'Users & Roles',      icon: ShieldCheck     },
+    { key: 'notify',    label: lang === 'ar' ? 'إرسال إشعار' : 'Send Notification',  icon: Bell            },
+    { key: 'reports',   label: lang === 'ar' ? 'التقارير والإشعارات' : 'Reports & Notifs',   icon: FileText        },
   ]
 
   const [doctorPickModal, setDoctorPickModal] = useState<{ userId: Id<"patients">; userName: string } | null>(null)

@@ -38,7 +38,7 @@ export async function notifyAppointmentConfirmed(
   department: string
 ) {
   const dateStr = appointmentDate.toLocaleString("ar-EG");
-  const message = `تم تأكيد موعدك مع د.${doctorName} في قسم ${department} - ${dateStr}`;
+  const message = `تم تأكيد موعدك مع ${doctorName} في قسم ${department} - ${dateStr}`;
 
   return await sendNotification(
     ctx,
@@ -79,7 +79,7 @@ export async function notifyAppointmentCompleted(
   doctorName: string,
   department: string
 ) {
-  const message = `تم إكمال موعدك مع د.${doctorName} في قسم ${department}. يمكنك الآن الاطلاع على التقرير الطبي`;
+  const message = `تم إكمال موعدك مع ${doctorName} في قسم ${department}. يمكنك الآن الاطلاع على التقرير الطبي`;
 
   return await sendNotification(
     ctx,

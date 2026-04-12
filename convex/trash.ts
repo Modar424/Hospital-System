@@ -100,7 +100,17 @@ export const getCancelledAppointments = query({
 
         // احصل على جميع المواعيد وصفّ فقط المكنسلة والمكتملة التي نُقلت للـ Trash (trashedAt موجود)
         const allAppointments = await ctx.db.query("appointments").collect();
-        let trashed = allAppointments.filter((apt) => (apt.status === "cancelled" || apt.status === "completed") && apt.trashedAt);
+        // فلترة حسب دور المستخدم: كل شخص يرى فقط ما لم يحذفه هو
+        let trashed = allAppointments.filter((apt) => {
+            if (!(apt.status === "cancelled" || apt.status === "completed") || !apt.trashedAt) return false;
+            if (user.role === "doctor") {
+                // الطبيب لا يرى ما حذفه هو
+                return !apt.deletedByDoctorId || apt.deletedByDoctorId !== user.doctorId;
+            } else {
+                // السكرتيرة/الأدمن لا ترى ما حذفته هي
+                return !apt.deletedBySecretaryId || apt.deletedBySecretaryId !== user._id;
+            }
+        });
 
         // إذا كان الدكتور، عرّض فقط مواعيده الخاصة
         if (user.role === "doctor" && user.doctorId) {
@@ -203,7 +213,7 @@ export const moveAppointmentToTrash = mutation({
     },
 });
 
-/** حذف نهائي للموعد من سلة المحذوفات */
+/** حذف محلي للموعد من سلة المحذوفات (يختفي من واجهة الموظف فقط - البيانات تبقى للمريض) */
 export const permanentDeleteAppointment = mutation({
     args: { appointmentId: v.id("appointments") },
     handler: async (ctx, args) => {
@@ -219,7 +229,12 @@ export const permanentDeleteAppointment = mutation({
             throw new Error("You do not have permission to delete appointments");
         }
 
-        await ctx.db.delete(args.appointmentId);
+        // حذف محلي فقط - يختفي من عرض هذا المستخدم فقط، البيانات تبقى للمريض
+        if (user.role === "doctor" && user.doctorId) {
+            await ctx.db.patch(args.appointmentId, { deletedByDoctorId: user.doctorId });
+        } else {
+            await ctx.db.patch(args.appointmentId, { deletedBySecretaryId: user._id });
+        }
     },
 });
 

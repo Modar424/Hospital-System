@@ -16,6 +16,7 @@ import { toast } from 'sonner'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import MessagePanel from '@/components/MessagePanel'
+import { useI18n } from '@/lib/i18n'
 
 type NavItem = 'patients' | 'notifications' | 'messages' | 'profiles' | 'trash'
 
@@ -56,20 +57,21 @@ function canCreateReport(apt: Appointment): boolean {
 // ── Doctor Auth Screen ─────────────────────────────────────────────────────
 function DoctorAuthScreen({ onSuccess }: { onSuccess: (name: string) => void }) {
   const verifyAndLink = useMutation(api.doctors.verifyAndLinkDoctor)
+  const { t, isRTL } = useI18n()
   const [name, setName] = useState('')
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async () => {
-    if (!name.trim() || !password.trim()) { toast.error('Please enter your name and password'); return }
+    if (!name.trim() || !password.trim()) { toast.error(t('doctor_full_name') + ' / ' + t('doctor_password')); return }
     setLoading(true)
     try {
       const result = await verifyAndLink({ name: name.trim(), password })
-      toast.success('Welcome, Dr. ' + result.doctorName + '!')
+      toast.success(t('doctor_welcome') + ' ' + result.doctorName + '!')
       onSuccess(result.doctorName)
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Invalid credentials')
+      toast.error(e instanceof Error ? e.message : t('doctor_invalid_creds'))
     } finally { setLoading(false) }
   }
 
@@ -81,33 +83,33 @@ function DoctorAuthScreen({ onSuccess }: { onSuccess: (name: string) => void }) 
             className="w-20 h-20 bg-teal-100 dark:bg-teal-900/40 rounded-full flex items-center justify-center mx-auto mb-5 shadow-lg">
             <Stethoscope className="w-10 h-10 text-teal-600" />
           </motion.div>
-          <h1 className="text-2xl font-bold mb-1">Doctor Dashboard</h1>
-          <p className="text-muted-foreground text-sm">Enter your name and password to access your patients</p>
+          <h1 className="text-2xl font-bold mb-1">{t('doctor_dashboard')}</h1>
+          <p className="text-muted-foreground text-sm">{t('doctor_access_password')}</p>
         </div>
 
         <div className="bg-card border border-border rounded-3xl p-7 shadow-xl">
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium mb-1.5 block">Full Name</label>
+              <label className="text-sm font-medium mb-1.5 block">{t('doctor_full_name')}</label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <User className={cn("absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground", isRTL ? "right-3" : "left-3")} />
                 <input type="text" value={name} onChange={e => setName(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleSubmit()}
                   placeholder="e.g. Dr. James Harrison"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 transition" />
+                  className={cn("w-full py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 transition", isRTL ? "pr-10 pl-4" : "pl-10 pr-4")} />
               </div>
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-1.5 block">Password</label>
+              <label className="text-sm font-medium mb-1.5 block">{t('doctor_password')}</label>
               <div className="relative">
-                <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <ShieldCheck className={cn("absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground", isRTL ? "right-3" : "left-3")} />
                 <input type={showPass ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleSubmit()}
                   placeholder="Your dashboard password"
-                  className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 transition" />
+                  className={cn("w-full py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 transition", isRTL ? "pr-10 pl-10" : "pl-10 pr-10")} />
                 <button type="button" onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  className={cn("absolute top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground", isRTL ? "left-3" : "right-3")}>
                   {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
@@ -116,15 +118,15 @@ function DoctorAuthScreen({ onSuccess }: { onSuccess: (name: string) => void }) 
             <Button className="w-full bg-teal-600 hover:bg-teal-700 text-white rounded-xl gap-2 shadow-lg shadow-teal-500/20 mt-2"
               onClick={handleSubmit} disabled={loading || !name.trim() || !password.trim()}>
               <LogIn className="w-4 h-4" />
-              {loading ? 'Verifying...' : 'Access Dashboard'}
+              {loading ? t('doctor_verifying') : t('doctor_verify')}
             </Button>
           </div>
           <p className="text-xs text-muted-foreground text-center mt-5">
-            Your password is set by the hospital admin. Contact administration if you need access.
+            {t('doctor_admin_note')}
           </p>
         </div>
         <div className="text-center mt-5">
-          <Link href="/" className="text-sm text-muted-foreground hover:text-primary transition-colors">← Back to Site</Link>
+          <Link href="/" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t('doctor_back_site')}</Link>
         </div>
       </motion.div>
     </div>
@@ -134,6 +136,7 @@ function DoctorAuthScreen({ onSuccess }: { onSuccess: (name: string) => void }) 
 // ── Invoice Modal ──────────────────────────────────────────────────────────
 function InvoiceModal({ appointment, patientName, onClose }: { appointment: Appointment; patientName: string; onClose: () => void }) {
   const createInvoice = useMutation(api.invoices.createInvoice)
+  const { t } = useI18n()
   const [condition, setCondition] = useState('')
   const [fees, setFees] = useState('')
   const [notes, setNotes] = useState('')
@@ -329,6 +332,7 @@ function ReportModal({ appointment, patientName, onClose }: { appointment: Appoi
 // ── Appointment Item ───────────────────────────────────────────────────────
 function AppointmentItem({ apt, onCreateInvoice, onCreateReport, onMoveToTrash }: { apt: Appointment; onCreateInvoice: () => void; onCreateReport: () => void; onMoveToTrash?: () => void }) {
   const updateStatus = useMutation(api.appointments.updateStatus)
+  const { t } = useI18n()
   const [completing, setCompleting] = useState(false)
 
   const canInvoice = canCreateInvoice(apt)
@@ -339,9 +343,9 @@ function AppointmentItem({ apt, onCreateInvoice, onCreateReport, onMoveToTrash }
     setCompleting(true)
     try {
       await updateStatus({ appointmentId: apt._id, status: 'completed' })
-      toast.success('Appointment marked as completed')
+      toast.success(t('doctor_complete_success'))
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Failed to complete appointment')
+      toast.error(e instanceof Error ? e.message : t('doctor_complete_failed'))
     } finally {
       setCompleting(false)
     }
@@ -367,25 +371,25 @@ function AppointmentItem({ apt, onCreateInvoice, onCreateReport, onMoveToTrash }
         {canComplete && (
           <button onClick={handleComplete} disabled={completing}
             className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-full bg-amber-600 text-white hover:bg-amber-700 transition-colors font-medium disabled:opacity-50">
-            <CheckCircle2 className="w-3.5 h-3.5" /> {completing ? 'Completing...' : 'Complete'}
+            <CheckCircle2 className="w-3.5 h-3.5" /> {completing ? t('doctor_completing') : t('doctor_complete_btn')}
           </button>
         )}
         {canReport && (
           <button onClick={onCreateReport}
             className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-full bg-teal-600 text-white hover:bg-teal-700 transition-colors font-medium">
-            <FileText className="w-3.5 h-3.5" /> Report
+            <FileText className="w-3.5 h-3.5" /> {t('doctor_report_btn')}
           </button>
         )}
         {canInvoice && (
           <button onClick={onCreateInvoice}
             className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-full bg-primary text-white hover:bg-primary/90 transition-colors font-medium">
-            <Plus className="w-3.5 h-3.5" /> Invoice
+            <Plus className="w-3.5 h-3.5" /> {t('doctor_invoice_btn')}
           </button>
         )}
         {(apt.status === 'cancelled' || apt.status === 'completed') && onMoveToTrash && (
           <button onClick={onMoveToTrash}
             className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-full bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-colors font-medium">
-            <Trash2 className="w-3.5 h-3.5" /> سلة محذوفات
+            <Trash2 className="w-3.5 h-3.5" /> {t('doctor_move_trash')}
           </button>
         )}
       </div>
@@ -398,6 +402,7 @@ function PatientCard({ group, onMoveToTrash }: { group: { patient: Patient; appo
   const [expanded, setExpanded] = useState(false)
   const [invoiceApt, setInvoiceApt] = useState<Appointment | null>(null)
   const [reportApt, setReportApt] = useState<Appointment | null>(null)
+  const { t } = useI18n()
 
   const pending   = group.appointments.filter(a => a.status === 'pending')
   const confirmed = group.appointments.filter(a => a.status === 'confirmed')
@@ -421,7 +426,7 @@ function PatientCard({ group, onMoveToTrash }: { group: { patient: Patient; appo
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {activeCount > 0 && <Badge className="bg-primary/10 text-primary border-0 text-xs">{activeCount} active</Badge>}
+              {activeCount > 0 && <Badge className="bg-primary/10 text-primary border-0 text-xs">{activeCount} {t('doctor_active_label')}</Badge>}
               <button onClick={() => setExpanded(!expanded)} className="p-2 hover:bg-muted rounded-lg transition-colors">
                 {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               </button>
@@ -436,7 +441,7 @@ function PatientCard({ group, onMoveToTrash }: { group: { patient: Patient; appo
                   {pending.length > 0 && (
                     <div>
                       <div className="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-2 flex items-center gap-1.5">
-                        <Hourglass className="w-3.5 h-3.5" /> Pending ({pending.length})
+                        <Hourglass className="w-3.5 h-3.5" /> {t('doctor_pending_label')} ({pending.length})
                       </div>
                       <div className="space-y-2">{pending.map(apt => <AppointmentItem key={apt._id} apt={apt} onCreateInvoice={() => setInvoiceApt(apt)} onCreateReport={() => setReportApt(apt)} onMoveToTrash={onMoveToTrash ? () => onMoveToTrash(apt._id) : undefined} />)}</div>
                     </div>
@@ -444,7 +449,7 @@ function PatientCard({ group, onMoveToTrash }: { group: { patient: Patient; appo
                   {confirmed.length > 0 && (
                     <div>
                       <div className="text-xs font-semibold text-teal-600 uppercase tracking-wide mb-2 flex items-center gap-1.5">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Confirmed ({confirmed.length})
+                        <CheckCircle2 className="w-3.5 h-3.5" /> {t('doctor_confirmed_label')} ({confirmed.length})
                       </div>
                       <div className="space-y-2">{confirmed.map(apt => <AppointmentItem key={apt._id} apt={apt} onCreateInvoice={() => setInvoiceApt(apt)} onCreateReport={() => setReportApt(apt)} onMoveToTrash={onMoveToTrash ? () => onMoveToTrash(apt._id) : undefined} />)}</div>
                     </div>
@@ -452,7 +457,7 @@ function PatientCard({ group, onMoveToTrash }: { group: { patient: Patient; appo
                   {completed.length > 0 && (
                     <div>
                       <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
-                        <FileText className="w-3.5 h-3.5" /> Completed ({completed.length})
+                        <FileText className="w-3.5 h-3.5" /> {t('doctor_completed_label')} ({completed.length})
                       </div>
                       <div className="space-y-2">{completed.map(apt => <AppointmentItem key={apt._id} apt={apt} onCreateInvoice={() => setInvoiceApt(apt)} onCreateReport={() => setReportApt(apt)} onMoveToTrash={onMoveToTrash ? () => onMoveToTrash(apt._id) : undefined} />)}</div>
                     </div>
@@ -460,7 +465,7 @@ function PatientCard({ group, onMoveToTrash }: { group: { patient: Patient; appo
                   {cancelled.length > 0 && (
                     <div>
                       <div className="text-xs font-semibold text-red-400 uppercase tracking-wide mb-2 flex items-center gap-1.5">
-                        <XCircle className="w-3.5 h-3.5" /> Cancelled ({cancelled.length})
+                        <XCircle className="w-3.5 h-3.5" /> {t('doctor_cancelled_label')} ({cancelled.length})
                       </div>
                       <div className="space-y-2">{cancelled.map(apt => <AppointmentItem key={apt._id} apt={apt} onCreateInvoice={() => setInvoiceApt(apt)} onCreateReport={() => setReportApt(apt)} onMoveToTrash={onMoveToTrash ? () => onMoveToTrash(apt._id) : undefined} />)}</div>
                     </div>
@@ -481,6 +486,7 @@ function PatientCard({ group, onMoveToTrash }: { group: { patient: Patient; appo
 
 // ── Main Page ──────────────────────────────────────────────────────────────
 export default function DoctorDashboardPage() {
+  const { t, isRTL } = useI18n()
   const currentUser  = useQuery(api.patients.getUser)
   const groups       = useQuery(api.appointments.getMyPatientsAppointments)
   const notifications= useQuery(api.notifications.myNotifications)
@@ -509,15 +515,14 @@ export default function DoctorDashboardPage() {
       <div className="min-h-screen flex items-center justify-center text-center px-4">
         <div>
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold mb-2">Access Denied</h2>
-          <p className="text-muted-foreground mb-4">This page is only for doctors.</p>
-          <Link href="/"><Button>Go Home</Button></Link>
+          <h2 className="text-xl font-bold mb-2">{t('doctor_access_denied')}</h2>
+          <p className="text-muted-foreground mb-4">{t('doctor_access_denied_msg')}</p>
+          <Link href="/"><Button>{t('doctor_go_home')}</Button></Link>
         </div>
       </div>
     )
   }
 
-  // يظهر شاشة التحقق إذا لم يتحقق في هذه الجلسة
   if (!verifiedName) {
     return <DoctorAuthScreen onSuccess={(name) => setVerifiedName(name)} />
   }
@@ -530,22 +535,22 @@ export default function DoctorDashboardPage() {
   const handleMoveToTrash = async (appointmentId: string) => {
     try {
       await moveAppointmentToTrash({ appointmentId: appointmentId as any })
-      toast.success('تم نقل الموعد إلى السلة ✓')
+      toast.success(t('doctor_move_trash_success'))
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'فشل نقل الموعد')
+      toast.error(e instanceof Error ? e.message : t('doctor_move_trash_failed'))
     }
   }
 
   const navItems: { key: NavItem; label: string; icon: React.ElementType }[] = [
-    { key: 'patients',      label: 'My Patients',     icon: ClipboardList },
-    { key: 'profiles',      label: 'Patient Profiles', icon: Users        },
-    { key: 'messages',      label: 'Messages',         icon: MessageSquare },
-    { key: 'notifications', label: 'Notifications',    icon: Bell          },
-    { key: 'trash',         label: 'Trash',            icon: Trash2        },
+    { key: 'patients',      label: t('doctor_nav_patients'),      icon: ClipboardList },
+    { key: 'profiles',      label: t('doctor_nav_profiles'),      icon: Users         },
+    { key: 'messages',      label: t('doctor_nav_messages'),      icon: MessageSquare },
+    { key: 'notifications', label: t('doctor_nav_notifications'), icon: Bell          },
+    { key: 'trash',         label: t('doctor_nav_trash'),         icon: Trash2        },
   ]
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className={cn("flex min-h-screen bg-background", isRTL ? "flex-row-reverse" : "flex-row")}>
       {/* Sidebar */}
       <aside className="w-60 bg-slate-900 text-slate-200 flex flex-col p-4 shrink-0">
         <div className="flex items-center gap-2 px-2 py-4 mb-6">
@@ -554,13 +559,13 @@ export default function DoctorDashboardPage() {
           </div>
           <div>
             <div className="font-bold text-white text-sm">HealWell</div>
-            <div className="text-xs text-slate-400">Doctor Panel</div>
+            <div className="text-xs text-slate-400">{t('doctor_panel')}</div>
           </div>
         </div>
 
         <div className="px-2 mb-6">
           <div className="bg-slate-800 rounded-xl p-3">
-            <div className="text-xs text-slate-400 mb-0.5">Signed in as</div>
+            <div className="text-xs text-slate-400 mb-0.5">{t('doctor_signed_in')}</div>
             <div className="font-semibold text-white text-sm truncate"> {verifiedName}</div>
           </div>
         </div>
@@ -597,11 +602,11 @@ export default function DoctorDashboardPage() {
         <div className="pt-4 border-t border-slate-800 space-y-1">
           <button onClick={() => setVerifiedName(null)}
             className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
-            <LogIn className="w-4 h-4 rotate-180" /> Lock Dashboard
+            <LogIn className="w-4 h-4 rotate-180" /> {t('doctor_lock')}
           </button>
           <Link href="/">
             <Button variant="ghost" size="sm" className="w-full text-slate-400 hover:text-white justify-start gap-2">
-              ← Back to Site
+              {t('doctor_back_site')}
             </Button>
           </Link>
         </div>
@@ -614,15 +619,15 @@ export default function DoctorDashboardPage() {
         {activeNav === 'patients' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <div className="mb-6">
-              <h1 className="text-2xl font-bold">My Patients</h1>
-              <p className="text-muted-foreground text-sm mt-0.5">View appointments and create invoices for completed visits</p>
+              <h1 className="text-2xl font-bold">{t('doctor_patients_title')}</h1>
+              <p className="text-muted-foreground text-sm mt-0.5">{t('doctor_patients_subtitle')}</p>
             </div>
 
             <div className="grid grid-cols-3 gap-4 mb-6">
               {[
-                { label: 'Total Patients',  value: totalPatients,  color: 'text-primary',   bg: 'bg-primary/10', icon: User         },
-                { label: 'Pending Appts',   value: totalPending,   color: 'text-amber-600', bg: 'bg-amber-100',  icon: Hourglass    },
-                { label: 'Confirmed Appts', value: totalConfirmed, color: 'text-teal-600',  bg: 'bg-teal-100',   icon: CheckCircle2 },
+                { label: t('doctor_total_patients'),  value: totalPatients,  color: 'text-primary',   bg: 'bg-primary/10', icon: User         },
+                { label: t('doctor_pending_appts'),   value: totalPending,   color: 'text-amber-600', bg: 'bg-amber-100',  icon: Hourglass    },
+                { label: t('doctor_confirmed_appts'), value: totalConfirmed, color: 'text-teal-600',  bg: 'bg-teal-100',   icon: CheckCircle2 },
               ].map((s, i) => (
                 <motion.div key={s.label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
                   className="bg-card border border-border rounded-2xl p-4 shadow-sm">
@@ -638,7 +643,7 @@ export default function DoctorDashboardPage() {
             <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-6 flex items-start gap-3">
               <Receipt className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
               <p className="text-sm text-blue-700 dark:text-blue-400">
-                <strong>Invoice rule:</strong> You can only create invoices for <strong>confirmed</strong> appointments whose day has already passed.
+                <strong>{t('doctor_invoice_rule')}</strong> {t('doctor_invoice_rule_msg')}
               </p>
             </div>
 
@@ -647,8 +652,8 @@ export default function DoctorDashboardPage() {
             ) : groups.length === 0 ? (
               <div className="text-center py-24 text-muted-foreground">
                 <User className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                <p className="font-medium">No patients yet</p>
-                <p className="text-sm mt-1">Patients will appear once appointments are booked with you</p>
+                <p className="font-medium">{t('doctor_no_patients')}</p>
+                <p className="text-sm mt-1">{t('doctor_no_patients_msg')}</p>
               </div>
             ) : (
               <div className="space-y-3">{groups.map(group => <PatientCard key={group.patient._id} group={group} onMoveToTrash={handleMoveToTrash} />)}</div>
@@ -659,15 +664,15 @@ export default function DoctorDashboardPage() {
         {activeNav === 'notifications' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <div className="mb-6">
-              <h1 className="text-2xl font-bold">Notifications</h1>
-              <p className="text-muted-foreground text-sm mt-0.5">Messages from the admin</p>
+              <h1 className="text-2xl font-bold">{t('doctor_notifications_title')}</h1>
+              <p className="text-muted-foreground text-sm mt-0.5">{t('doctor_notifications_subtitle')}</p>
             </div>
             {notifications === undefined ? (
               <div className="space-y-3">{Array(3).fill(0).map((_, i) => <div key={i} className="h-20 rounded-2xl bg-muted animate-pulse" />)}</div>
             ) : notifications.filter(n => !n.isDeleted).length === 0 ? (
               <div className="text-center py-24 text-muted-foreground">
                 <Bell className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                <p className="font-medium">No notifications yet</p>
+                <p className="font-medium">{t('doctor_no_notifications')}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -681,8 +686,8 @@ export default function DoctorDashboardPage() {
                         </div>
                         <div>
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-semibold text-sm">{notif.type === 'meeting_request' ? 'Meeting Request' : 'Notification'}</span>
-                            {!notif.isRead && <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">New</span>}
+                            <span className="font-semibold text-sm">{notif.type === 'meeting_request' ? t('doctor_meeting_request') : t('doctor_notification')}</span>
+                            {!notif.isRead && <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">{t('doctor_new_badge')}</span>}
                           </div>
                           <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{notif.message}</p>
                           {notif.scheduledAt && (
@@ -699,19 +704,19 @@ export default function DoctorDashboardPage() {
                           {!notif.isRead && (
                             <button onClick={() => markRead({ notificationId: notif._id })}
                               className="text-xs px-3 py-1 rounded-full border border-primary/30 text-primary hover:bg-primary/10 transition-colors">
-                              Mark read
+                              {t('doctor_mark_read')}
                             </button>
                           )}
                           <button onClick={async () => {
                             try {
                               await deleteNotif({ notificationId: notif._id })
-                              toast.success('تم حذف الإشعار')
+                              toast.success(t('doctor_notif_deleted'))
                             } catch (e) {
-                              toast.error(e instanceof Error ? e.message : 'فشل الحذف')
+                              toast.error(e instanceof Error ? e.message : t('doctor_notif_delete_failed'))
                             }
                           }}
                             className="text-xs px-3 py-1 rounded-full border border-red-300/50 text-red-600 hover:bg-red-50 transition-colors">
-                            Delete
+                            {t('doctor_delete_notif')}
                           </button>
                         </div>
                       </div>
@@ -727,15 +732,15 @@ export default function DoctorDashboardPage() {
         {activeNav === 'profiles' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <div className="mb-6">
-              <h1 className="text-2xl font-bold">Patient Profiles</h1>
-              <p className="text-muted-foreground text-sm mt-0.5">Medical profiles for all registered patients</p>
+              <h1 className="text-2xl font-bold">{t('doctor_profiles_title')}</h1>
+              <p className="text-muted-foreground text-sm mt-0.5">{t('doctor_profiles_subtitle')}</p>
             </div>
             {allProfiles === undefined ? (
               <div className="space-y-3">{Array(4).fill(0).map((_, i) => <div key={i} className="h-24 rounded-2xl bg-muted animate-pulse" />)}</div>
             ) : allProfiles.length === 0 ? (
               <div className="text-center py-24 text-muted-foreground">
                 <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                <p className="font-medium">No patient profiles yet</p>
+                <p className="font-medium">{t('doctor_no_profiles')}</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -756,35 +761,35 @@ export default function DoctorDashboardPage() {
                           <button
                             onClick={() => {
                               navigator.clipboard.writeText(profile.patientId);
-                              toast.success('تم نسخ ID المريض');
+                              toast.success(t('doctor_copied_id'));
                             }}
                             className="text-xs px-2 py-1 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
                           >
-                            Copy
+                            {t('doctor_copy')}
                           </button>
                         </div>
                       </div>
                       <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium',
                         profile.gender === 'male' ? 'bg-blue-100 text-blue-700' :
                         profile.gender === 'female' ? 'bg-pink-100 text-pink-700' : 'bg-gray-100 text-gray-700')}>
-                        {profile.gender === 'male' ? 'ذكر' : profile.gender === 'female' ? 'أنثى' : 'آخر'}
+                        {profile.gender === 'male' ? t('doctor_gender_male') : profile.gender === 'female' ? t('doctor_gender_female') : t('doctor_gender_other')}
                       </span>
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div className="bg-muted/50 rounded-lg p-2">
-                        <span className="text-muted-foreground block">فصيلة الدم</span>
+                        <span className="text-muted-foreground block">{t('doctor_blood_type')}</span>
                         <span className="font-semibold text-foreground">{profile.bloodType}</span>
                       </div>
                       <div className="bg-muted/50 rounded-lg p-2">
-                        <span className="text-muted-foreground block">تاريخ الميلاد</span>
+                        <span className="text-muted-foreground block">{t('doctor_dob')}</span>
                         <span className="font-semibold text-foreground">{profile.dateOfBirth}</span>
                       </div>
                       <div className="bg-muted/50 rounded-lg p-2">
-                        <span className="text-muted-foreground block">الهاتف</span>
+                        <span className="text-muted-foreground block">{t('doctor_phone')}</span>
                         <span className="font-semibold text-foreground">{profile.phone}</span>
                       </div>
                       <div className="bg-muted/50 rounded-lg p-2">
-                        <span className="text-muted-foreground block">طوارئ</span>
+                        <span className="text-muted-foreground block">{t('doctor_emergency')}</span>
                         <span className="font-semibold text-foreground truncate block">{profile.emergencyContact}</span>
                       </div>
                     </div>
@@ -792,7 +797,7 @@ export default function DoctorDashboardPage() {
                       <div className="mt-3 space-y-1.5">
                         {profile.allergies?.length > 0 && (
                           <div className="flex flex-wrap gap-1">
-                            <span className="text-xs text-muted-foreground ml-1">حساسية:</span>
+                            <span className="text-xs text-muted-foreground ml-1">{t('doctor_allergies')}:</span>
                             {profile.allergies.map((a: string, idx: number) => (
                               <span key={idx} className="text-xs px-2 py-0.5 bg-red-50 text-red-600 rounded-full border border-red-100">{a}</span>
                             ))}
@@ -800,7 +805,7 @@ export default function DoctorDashboardPage() {
                         )}
                         {profile.medicalHistory?.length > 0 && (
                           <div className="flex flex-wrap gap-1">
-                            <span className="text-xs text-muted-foreground ml-1">تاريخ طبي:</span>
+                            <span className="text-xs text-muted-foreground ml-1">{t('doctor_medical_history')}:</span>
                             {profile.medicalHistory.map((h: string, idx: number) => (
                               <span key={idx} className="text-xs px-2 py-0.5 bg-amber-50 text-amber-600 rounded-full border border-amber-100">{h}</span>
                             ))}
@@ -823,22 +828,22 @@ export default function DoctorDashboardPage() {
               className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-full font-medium transition-all shadow-lg shadow-violet-500/20"
             >
               <MessageSquare className="w-5 h-5" />
-              فتح لوحة الرسائل
+              {t('doctor_open_messages')}
             </button>
           </motion.div>
         )}
 
-        {/* ══ TRASH (CANCELLED & COMPLETED APPOINTMENTS) ════════════════════════ */}
+        {/* ══ TRASH ════════════════════════════════════════════════ */}
         {activeNav === 'trash' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-foreground">سلة المحذوفات</h2>
-                <p className="text-sm text-muted-foreground mt-1">إدارة المواعيد الملغاة والمكتملة والمحذوفة</p>
+                <h2 className="text-2xl font-bold text-foreground">{t('doctor_trash_title')}</h2>
+                <p className="text-sm text-muted-foreground mt-1">{t('doctor_trash_subtitle')}</p>
               </div>
               {trashCount > 0 && (
                 <div className="px-4 py-2 rounded-full bg-red-100 text-red-700 font-semibold">
-                  {trashCount} موعد
+                  {trashCount}
                 </div>
               )}
             </div>
@@ -854,7 +859,7 @@ export default function DoctorDashboardPage() {
                     : 'text-muted-foreground border-transparent hover:text-foreground'
                 )}
               >
-                المواعيد المكتملة
+                {t('doctor_trash_completed')}
                 {(cancelledAppointments?.filter((apt: any) => apt.status === 'completed').length ?? 0) > 0 && (
                   <span className="ml-2 px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold">
                     {cancelledAppointments?.filter((apt: any) => apt.status === 'completed').length ?? 0}
@@ -870,7 +875,7 @@ export default function DoctorDashboardPage() {
                     : 'text-muted-foreground border-transparent hover:text-foreground'
                 )}
               >
-                المواعيد الملغاة
+                {t('doctor_trash_cancelled')}
                 {(cancelledAppointments?.filter((apt: any) => apt.status === 'cancelled').length ?? 0) > 0 && (
                   <span className="ml-2 px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-semibold">
                     {cancelledAppointments?.filter((apt: any) => apt.status === 'cancelled').length ?? 0}
@@ -888,9 +893,9 @@ export default function DoctorDashboardPage() {
                 <div className="text-center">
                   <Trash2 className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-muted-foreground">
-                    {trashTab === 'completed' ? 'لا توجد مواعيد مكتملة' : 'لا توجد مواعيد ملغاة'}
+                    {trashTab === 'completed' ? t('doctor_trash_empty_completed') : t('doctor_trash_empty_cancelled')}
                   </h3>
-                  <p className="text-sm text-muted-foreground mt-1">سلة المحذوفات فارغة</p>
+                  <p className="text-sm text-muted-foreground mt-1">{t('doctor_trash_empty_desc')}</p>
                 </div>
               </motion.div>
             ) : (
@@ -918,13 +923,11 @@ export default function DoctorDashboardPage() {
                             trashTab === 'completed' ? 'border-slate-200' : 'border-red-200'
                           )}
                         >
-                          {/* Main header - collapsible */}
                           <button
                             onClick={toggleExpanded}
                             className="w-full p-5 hover:bg-muted/50 transition-colors text-left"
                           >
                             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                              {/* Patient info */}
                               <div className="flex items-start gap-3 flex-1 min-w-0">
                                 <div className={cn(
                                   'w-11 h-11 rounded-xl flex items-center justify-center shrink-0',
@@ -950,8 +953,6 @@ export default function DoctorDashboardPage() {
                                   </div>
                                 </div>
                               </div>
-
-                              {/* Expand icon */}
                               <div className="flex items-center gap-2 shrink-0">
                                 <div className="text-sm text-muted-foreground">
                                   {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
@@ -960,7 +961,6 @@ export default function DoctorDashboardPage() {
                             </div>
                           </button>
 
-                          {/* Expanded details */}
                           <AnimatePresence>
                             {isExpanded && (
                               <motion.div
@@ -973,7 +973,6 @@ export default function DoctorDashboardPage() {
                                 )}
                               >
                                 <div className="p-5">
-                                  {/* Action buttons only */}
                                   <div className="flex gap-2">
                                     <button
                                       onClick={async () => {
@@ -982,31 +981,31 @@ export default function DoctorDashboardPage() {
                                             appointmentId: apt._id,
                                             status: trashTab === 'completed' ? 'completed' : ('cancelled' as const)
                                           })
-                                          toast.success('تم استعادة الموعد بنجاح')
+                                          toast.success(t('doctor_restore_success'))
                                         } catch {
-                                          toast.error('فشل في استعادة الموعد')
+                                          toast.error(t('doctor_restore_failed'))
                                         }
                                       }}
                                       className="flex-1 flex items-center justify-center gap-1 text-sm px-3 py-2 rounded-lg bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100 transition-colors font-medium"
                                     >
-                                      <RotateCcw className="w-4 h-4" /> استعادة
+                                      <RotateCcw className="w-4 h-4" /> {t('doctor_restore')}
                                     </button>
                                     <button
                                       onClick={async () => {
-                                        if (confirm('هل أنت متأكد من حذف هذا الموعد نهائياً؟')) {
+                                        if (confirm(t('doctor_delete_local_confirm'))) {
                                           try {
                                             await permanentDeleteAppointment({
                                               appointmentId: apt._id
                                             })
-                                            toast.success('تم حذف الموعد نهائياً')
+                                            toast.success(t('doctor_delete_local_success'))
                                           } catch {
-                                            toast.error('فشل في حذف الموعد')
+                                            toast.error(t('doctor_delete_local_failed'))
                                           }
                                         }
                                       }}
                                       className="flex-1 flex items-center justify-center gap-1 text-sm px-3 py-2 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-colors font-medium"
                                     >
-                                      <Trash2 className="w-4 h-4" /> حذف نهائي
+                                      <Trash2 className="w-4 h-4" /> {t('doctor_delete_local')}
                                     </button>
                                   </div>
                                 </div>

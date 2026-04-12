@@ -9,6 +9,7 @@ import {
   AlertCircle, Heart, Download, Eye, Search
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useI18n } from '@/lib/i18n'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 
@@ -36,7 +37,8 @@ interface PatientFilesProps {
   onClose: () => void
 }
 
-export default function PatientFilesPanel({ isOpen, onClose }: PatientFilesProps) {
+export default function PatientFilesPanel({
+  const { lang } = useI18n() isOpen, onClose }: PatientFilesProps) {
   const profiles = useQuery(api.patientProfiles.getAllPatientProfiles)
   const [selectedPatient, setSelectedPatient] = useState<PatientProfile | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
@@ -129,7 +131,7 @@ ${profile.notes || "لا توجد ملاحظات"}
                 <Users className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="font-bold text-lg">ملفات المرضى</h2>
+                <h2 className="font-bold text-lg">{lang === 'ar' ? 'ملفات المرضى' : 'Patient Files'}</h2>
                 <p className="text-sm text-slate-300">
                   {filteredProfiles?.length} ملف متاح
                 </p>
@@ -164,10 +166,10 @@ ${profile.notes || "لا توجد ملاحظات"}
                   onChange={(e) => setFilterGender(e.target.value as "all" | "male" | "female" | "other")}
                   className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/30"
                 >
-                  <option value="all">الكل</option>
-                  <option value="male">ذكور</option>
-                  <option value="female">إناث</option>
-                  <option value="other">آخر</option>
+                  <option value="all">{lang === 'ar' ? 'الكل' : 'All'}</option>
+                  <option value="male">{lang === 'ar' ? 'ذكور' : 'Male'}</option>
+                  <option value="female">{lang === 'ar' ? 'إناث' : 'Female'}</option>
+                  <option value="other">{lang === 'ar' ? 'آخر' : 'Other'}</option>
                 </select>
               </div>
 
@@ -211,7 +213,7 @@ ${profile.notes || "لا توجد ملاحظات"}
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
                     <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">لا توجد ملفات</p>
+                    <p className="text-sm">{lang === 'ar' ? 'لا توجد ملفات' : 'No files found'}</p>
                   </div>
                 )}
               </div>
@@ -265,21 +267,21 @@ ${profile.notes || "لا توجد ملاحظات"}
                     </h4>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="bg-muted/50 rounded-lg p-3">
-                        <p className="text-xs text-muted-foreground mb-1">الهاتف</p>
+                        <p className="text-xs text-muted-foreground mb-1">{lang === 'ar' ? 'الهاتف' : 'Phone'}</p>
                         <p className="font-medium">{selectedPatient.phone}</p>
                       </div>
                       <div className="bg-muted/50 rounded-lg p-3">
-                        <p className="text-xs text-muted-foreground mb-1">تاريخ الميلاد</p>
+                        <p className="text-xs text-muted-foreground mb-1">{lang === 'ar' ? 'تاريخ الميلاد' : 'Date of Birth'}</p>
                         <p className="font-medium">{selectedPatient.dateOfBirth}</p>
                       </div>
                       <div className="bg-muted/50 rounded-lg p-3">
-                        <p className="text-xs text-muted-foreground mb-1">الجنس</p>
+                        <p className="text-xs text-muted-foreground mb-1">{lang === 'ar' ? 'الجنس' : 'Gender'}</p>
                         <p className="font-medium">
                           {selectedPatient.gender === "male" ? "ذكر" : selectedPatient.gender === "female" ? "أنثى" : "آخر"}
                         </p>
                       </div>
                       <div className="bg-muted/50 rounded-lg p-3">
-                        <p className="text-xs text-muted-foreground mb-1">فصيلة الدم</p>
+                        <p className="text-xs text-muted-foreground mb-1">{lang === 'ar' ? 'فصيلة الدم' : 'Blood Type'}</p>
                         <p className="font-medium">{selectedPatient.bloodType}</p>
                       </div>
                     </div>
@@ -293,11 +295,11 @@ ${profile.notes || "لا توجد ملاحظات"}
                     </h4>
                     <div className="space-y-3">
                       <div className="bg-muted/50 rounded-lg p-3">
-                        <p className="text-xs text-muted-foreground mb-2">العنوان</p>
+                        <p className="text-xs text-muted-foreground mb-2">{lang === 'ar' ? 'العنوان' : 'Address'}</p>
                         <p className="font-medium">{selectedPatient.address}</p>
                       </div>
                       <div className="bg-muted/50 rounded-lg p-3">
-                        <p className="text-xs text-muted-foreground mb-2">جهة اتصال الطوارئ</p>
+                        <p className="text-xs text-muted-foreground mb-2">{lang === 'ar' ? 'جهة اتصال الطوارئ' : 'Emergency Contact'}</p>
                         <p className="font-medium">{selectedPatient.emergencyContact}</p>
                       </div>
                     </div>
@@ -346,7 +348,7 @@ ${profile.notes || "لا توجد ملاحظات"}
                   {/* Notes */}
                   {selectedPatient.notes && (
                     <div>
-                      <h4 className="font-semibold mb-3">ملاحظات</h4>
+                      <h4 className="font-semibold mb-3">{lang === 'ar' ? 'ملاحظات' : 'Notes'}</h4>
                       <div className="bg-muted/50 rounded-lg p-4 text-sm">
                         {selectedPatient.notes}
                       </div>
@@ -356,7 +358,7 @@ ${profile.notes || "لا توجد ملاحظات"}
               ) : (
                 <div className="flex flex-col items-center justify-center h-full text-center">
                   <Eye className="w-12 h-12 text-muted-foreground mb-4 opacity-50" />
-                  <p className="text-muted-foreground">اختر مريضاً لعرض ملفه</p>
+                  <p className="text-muted-foreground">{lang === 'ar' ? 'اختر مريضاً لعرض ملفه' : 'Select a patient to view their profile'}</p>
                 </div>
               )}
             </div>

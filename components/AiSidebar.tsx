@@ -29,7 +29,7 @@ function AIChatSidebar() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: t('chat_greeting'),
+      content: '',
       timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
     }
   ])
@@ -41,6 +41,16 @@ function AIChatSidebar() {
   const containerRef = useRef<HTMLDivElement>(null)
 
   const sendMessage = useAction(api.actions.chat)
+
+  // Initialize greeting message with proper translation
+  useEffect(() => {
+    const now = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    setMessages([{
+      role: "assistant",
+      content: t('chat_greeting'),
+      timestamp: now,
+    }])
+  }, [t, lang])
 
   // Load saved width from localStorage
   useEffect(() => {
