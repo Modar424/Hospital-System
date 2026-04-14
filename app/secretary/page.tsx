@@ -123,6 +123,7 @@ function AppointmentRow({
   onMoveToTrash?: () => void
 }) {
   const [expanded, setExpanded] = useState(false)
+  const { lang, t } = useI18n()
   const cfg = statusConfig[apt.status]
   const StatusIcon = cfg?.icon ?? Stethoscope
 
@@ -152,21 +153,21 @@ function AppointmentRow({
                 {/* Has report badge */}
                 {apt.hasReport ? (
                   <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200 font-medium">
-                    {lang === 'ar' ? <><FileText className="w-3 h-3" /> ✓ تقرير</> : <><FileText className="w-3 h-3" /> ✓ Report</>}
+                    <FileText className="w-3 h-3" /> ✓ {t('doctor_report_btn')}
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 border border-gray-200 font-medium">
-                    {lang === 'ar' ? <><FileText className="w-3 h-3" /> — بلا تقرير</> : <><FileText className="w-3 h-3" /> — No Report</>}
+                    <FileText className="w-3 h-3" /> — {lang === 'ar' ? 'بلا تقرير' : 'No Report'}
                   </span>
                 )}
                 {/* Has invoice badge */}
                 {apt.hasInvoice ? (
                   <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200 font-medium">
-                    {lang === 'ar' ? <><FileText className="w-3 h-3" /> فاتورة</> : <><FileText className="w-3 h-3" /> Invoice</>}
+                    <FileText className="w-3 h-3" /> {t('doctor_invoice_btn')}
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border font-medium">
-                    {lang === 'ar' ? <><FileText className="w-3 h-3" /> بلا فاتورة</> : <><FileText className="w-3 h-3" /> No Invoice</>}
+                    <FileText className="w-3 h-3" /> {lang === 'ar' ? 'بلا فاتورة' : 'No Invoice'}
                   </span>
                 )}
               </div>
@@ -188,7 +189,7 @@ function AppointmentRow({
           <div className="flex items-center gap-3 sm:flex-col sm:items-end shrink-0">
             <Badge className={cn('text-xs border inline-flex items-center gap-1', cfg?.className)}>
               <StatusIcon className="w-3 h-3" />
-              {cfg?.label ?? apt.status}
+              {lang === 'ar' ? (cfg?.labelAr ?? apt.status) : (cfg?.label ?? apt.status)}
             </Badge>
 
             {/* Action buttons */}
@@ -199,13 +200,13 @@ function AppointmentRow({
                     onClick={onConfirm}
                     className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100 transition-colors font-medium"
                   >
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Confirm
+                    <CheckCircle2 className="w-3.5 h-3.5" /> {t('sec_action_confirm')}
                   </button>
                   <button
                     onClick={onCancel}
                     className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-colors font-medium"
                   >
-                    <XCircle className="w-3.5 h-3.5" /> Cancel
+                    <XCircle className="w-3.5 h-3.5" /> {t('sec_action_cancel')}
                   </button>
                 </>
               )}
@@ -215,13 +216,13 @@ function AppointmentRow({
                     onClick={onComplete}
                     className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors font-medium"
                   >
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Mark Done
+                    <CheckCircle2 className="w-3.5 h-3.5" /> {t('sec_action_complete')}
                   </button>
                   <button
                     onClick={onCancel}
                     className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-colors font-medium"
                   >
-                    <XCircle className="w-3.5 h-3.5" /> Cancel
+                    <XCircle className="w-3.5 h-3.5" /> {t('sec_action_cancel')}
                   </button>
                 </>
               )}
@@ -230,7 +231,7 @@ function AppointmentRow({
                   onClick={onMoveToTrash}
                   className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-colors font-medium"
                 >
-                  <Trash2 className="w-3.5 h-3.5" /> سلة محذوفات
+                  <Trash2 className="w-3.5 h-3.5" /> {t('sec_nav_trash')}
                 </button>
               )}
             </div>
@@ -300,6 +301,7 @@ interface Report {
 
 // ── Main Page ──────────────────────────────────────────────────────────────
 export default function SecretaryPage() {
+  const { lang, t } = useI18n()
   const appointments = useQuery(api.appointments.getAppointments) as Appointment[] | undefined
   const invoices     = useQuery(api.invoices.getAllInvoices) as Invoice[] | undefined
   const reports      = useQuery(api.reports.allReports) as Report[] | undefined
@@ -358,13 +360,13 @@ export default function SecretaryPage() {
         status: statusMap[confirmModal.action],
       })
       toast.success(
-        confirmModal.action === 'confirm'  ? 'Appointment confirmed ✓' :
-        confirmModal.action === 'complete' ? 'Marked as completed ✓'  :
-        'Appointment cancelled'
+        confirmModal.action === 'confirm'  ? t('sec_success_confirm') :
+        confirmModal.action === 'complete' ? t('sec_success_complete') :
+        t('sec_success_cancel')
       )
       setConfirmModal(null)
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Failed')
+      toast.error(e instanceof Error ? e.message : t('sec_fail_action'))
     } finally {
       setProcessing(false)
     }
@@ -374,26 +376,26 @@ export default function SecretaryPage() {
   const handleMoveToTrash = (appointmentId: Id<"appointments">) => async () => {
     try {
       await moveAppointmentToTrash({ appointmentId })
-      toast.success(lang === 'ar' ? 'تم نقل الموعد إلى السلة ✓' : 'Appointment moved to trash ✓')
+      toast.success(t('doctor_move_trash_success'))
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : lang === 'ar' ? 'فشل نقل الموعد' : 'Failed to move appointment')
+      toast.error(e instanceof Error ? e.message : t('doctor_move_trash_failed'))
     }
   }
 
   const navItems: { key: NavItem; label: string; icon: React.ElementType }[] = [
-    { key: 'appointments', label: 'Appointments',     icon: ClipboardList },
-    { key: 'profiles',     label: 'Patient Profiles', icon: Users         },
-    { key: 'messages',     label: 'Messages',         icon: MessageSquare },
-    { key: 'reports',      label: 'Reports',          icon: FileText      },
-    { key: 'invoices',     label: 'Invoices',         icon: Receipt       },
-    { key: 'trash',        label: 'Trash',            icon: Trash2        },
+    { key: 'appointments', label: t('sec_nav_appointments'), icon: ClipboardList },
+    { key: 'profiles',     label: t('sec_nav_profiles'),     icon: Users         },
+    { key: 'messages',     label: t('sec_nav_messages'),     icon: MessageSquare },
+    { key: 'reports',      label: t('sec_nav_reports'),      icon: FileText      },
+    { key: 'invoices',     label: t('sec_nav_invoices'),     icon: Receipt       },
+    { key: 'trash',        label: t('sec_nav_trash'),        icon: Trash2        },
   ]
 
   const statCards = [
-    { label: 'Total',     value: total,     icon: Calendar,    color: 'text-primary',   bg: 'bg-primary/10'  },
-    { label: "Today",     value: todayCount,icon: Clock,       color: 'text-blue-600',  bg: 'bg-blue-100'    },
-    { label: 'Pending',   value: pending,   icon: Hourglass,   color: 'text-amber-600', bg: 'bg-amber-100'   },
-    { label: 'Confirmed', value: confirmed, icon: CheckCircle2,color: 'text-teal-600',  bg: 'bg-teal-100'    },
+    { label: t('sec_stat_total'),     value: total,     icon: Calendar,    color: 'text-primary',   bg: 'bg-primary/10'  },
+    { label: t('sec_stat_today'),     value: todayCount,icon: Clock,       color: 'text-blue-600',  bg: 'bg-blue-100'    },
+    { label: t('sec_stat_pending'),   value: pending,   icon: Hourglass,   color: 'text-amber-600', bg: 'bg-amber-100'   },
+    { label: t('sec_stat_confirmed'), value: confirmed, icon: CheckCircle2,color: 'text-teal-600',  bg: 'bg-teal-100'    },
   ]
 
   return (
@@ -407,7 +409,7 @@ export default function SecretaryPage() {
           </div>
           <div>
             <div className="font-bold text-white text-sm">HealWell</div>
-            <div className="text-xs text-slate-400">Secretary Panel</div>
+            <div className="text-xs text-slate-400">{t('sec_panel')}</div>
           </div>
         </div>
 
@@ -456,7 +458,7 @@ export default function SecretaryPage() {
         <div className="pt-4 border-t border-slate-800">
           <Link href="/">
             <Button variant="ghost" size="sm" className="w-full text-slate-400 hover:text-white justify-start gap-2">
-              ← Back to Site
+              {t('sec_back_site')}
             </Button>
           </Link>
         </div>
@@ -470,9 +472,9 @@ export default function SecretaryPage() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h1 className="text-2xl font-bold">Appointments</h1>
+                <h1 className="text-2xl font-bold">{t('sec_appts_title')}</h1>
                 <p className="text-muted-foreground text-sm mt-0.5">
-                  Confirm, cancel, or complete patient appointments
+                  {t('sec_appts_subtitle')}
                 </p>
               </div>
             </div>
@@ -502,7 +504,7 @@ export default function SecretaryPage() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
                   type="text"
-                  placeholder="Search by patient, doctor, department..."
+                  placeholder={t('sec_search_placeholder')}
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition"
@@ -520,7 +522,11 @@ export default function SecretaryPage() {
                         : 'border-border text-muted-foreground hover:border-primary/40 hover:text-primary bg-card'
                     )}
                   >
-                    {s}
+                    {s === 'all' ? t('sec_filter_all') :
+                     s === 'pending' ? statusConfig.pending[lang === 'ar' ? 'labelAr' : 'label'] :
+                     s === 'confirmed' ? statusConfig.confirmed[lang === 'ar' ? 'labelAr' : 'label'] :
+                     s === 'completed' ? statusConfig.completed[lang === 'ar' ? 'labelAr' : 'label'] :
+                     statusConfig.cancelled[lang === 'ar' ? 'labelAr' : 'label']}
                     {s === 'pending' && pending > 0 && (
                       <span className={cn('ml-1.5 text-xs px-1.5 py-0.5 rounded-full',
                         statusFilter === s ? 'bg-white/20' : 'bg-amber-100 text-amber-700'
@@ -539,7 +545,7 @@ export default function SecretaryPage() {
             ) : filtered?.length === 0 ? (
               <div className="text-center py-20 text-muted-foreground">
                 <ClipboardList className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                <p className="font-medium">No appointments found</p>
+                <p className="font-medium">{t('sec_no_appts')}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -562,9 +568,9 @@ export default function SecretaryPage() {
         {activeNav === 'invoices' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <div className="mb-6">
-              <h1 className="text-2xl font-bold">Invoices</h1>
+              <h1 className="text-2xl font-bold">{t('sec_invoices_title')}</h1>
               <p className="text-muted-foreground text-sm mt-0.5">
-                All invoices created by doctors
+                {t('sec_invoices_subtitle')}
               </p>
             </div>
 
@@ -575,7 +581,7 @@ export default function SecretaryPage() {
             ) : invoices.length === 0 ? (
               <div className="text-center py-20 text-muted-foreground">
                 <Receipt className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                <p className="font-medium">No invoices yet</p>
+                <p className="font-medium">{t('sec_no_invoices')}</p>
               </div>
             ) : (
               <div className="bg-card border border-border rounded-2xl overflow-hidden">
@@ -583,7 +589,7 @@ export default function SecretaryPage() {
                   <table className="w-full text-sm">
                     <thead className="bg-muted/50 border-b border-border">
                       <tr>
-                        {['Invoice #', 'Patient', 'Doctor', 'Condition', 'Doctor Fees', 'Med Fees', 'Status', 'Date'].map(h => (
+                        {[t('sec_col_invoice'), t('sec_col_patient'), t('sec_col_doctor'), t('sec_col_condition'), t('sec_col_doctor_fees'), t('sec_col_med_fees'), t('sec_col_status'), t('sec_col_date')].map(h => (
                           <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase whitespace-nowrap">
                             {h}
                           </th>
@@ -609,7 +615,7 @@ export default function SecretaryPage() {
                           <td className="px-4 py-3 whitespace-nowrap">
                             {inv.medicationFees != null
                               ? <span className="font-semibold">{inv.medicationFees} SAR</span>
-                              : <span className="text-muted-foreground text-xs italic">Pending</span>
+                              : <span className="text-muted-foreground text-xs italic">{t('sec_stat_pending')}</span>
                             }
                           </td>
                           <td className="px-4 py-3">
@@ -618,7 +624,7 @@ export default function SecretaryPage() {
                                 ? 'bg-teal-50 text-teal-700 border-teal-200'
                                 : 'bg-amber-50 text-amber-700 border-amber-200'
                               )}>
-                                {inv.status === 'paid' ? 'Paid' : 'Pending Payment'}
+                                {inv.status === 'paid' ? t('sec_paid') : t('sec_pending_payment')}
                               </Badge>
                               {inv.status !== 'paid' && (
                                 <button
@@ -632,7 +638,7 @@ export default function SecretaryPage() {
                                   }}
                                   className="text-xs px-2 py-0.5 rounded-full bg-teal-600 text-white hover:bg-teal-700 transition-colors flex items-center gap-1"
                                 >
-                                  <Bell className="w-3 h-3" /> دفع
+                                  <Bell className="w-3 h-3" /> {t('sec_mark_paid_btn')}
                                 </button>
                               )}
                             </div>
@@ -654,9 +660,9 @@ export default function SecretaryPage() {
         {activeNav === 'reports' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <div className="mb-6">
-              <h1 className="text-2xl font-bold">Medical Reports</h1>
+              <h1 className="text-2xl font-bold">{t('sec_reports_title')}</h1>
               <p className="text-muted-foreground text-sm mt-0.5">
-                All medical reports created by doctors
+                {t('sec_reports_subtitle')}
               </p>
             </div>
 
@@ -667,7 +673,7 @@ export default function SecretaryPage() {
             ) : reports.length === 0 ? (
               <div className="text-center py-20 text-muted-foreground">
                 <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                <p className="font-medium">No reports yet</p>
+                <p className="font-medium">{t('sec_no_reports')}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -686,11 +692,11 @@ export default function SecretaryPage() {
                       {/* Header: Patient + Doctor */}
                       <div className="flex items-start justify-between mb-4">
                         <div>
-                          <div className="text-sm font-medium text-muted-foreground">Patient</div>
+                          <div className="text-sm font-medium text-muted-foreground">{t('sec_report_patient')}</div>
                           <div className="text-lg font-bold">{report.patientName}</div>
                         </div>
                         <div className="text-right">
-                          <div className="text-sm font-medium text-muted-foreground">Doctor</div>
+                          <div className="text-sm font-medium text-muted-foreground">{t('sec_report_doctor')}</div>
                           <div className="text-lg font-bold text-primary">{report.doctorName}</div>
                         </div>
                       </div>
@@ -707,14 +713,14 @@ export default function SecretaryPage() {
 
                       {/* Diagnosis */}
                       <div className="mb-4 p-4 bg-muted/40 rounded-xl">
-                        <div className="text-xs font-semibold text-muted-foreground uppercase mb-1">Diagnosis</div>
+                        <div className="text-xs font-semibold text-muted-foreground uppercase mb-1">{t('sec_report_diagnosis')}</div>
                         <div className="text-sm text-foreground">{report.diagnosis}</div>
                       </div>
 
                       {/* Medications */}
                       {report.medications && report.medications.length > 0 && (
                         <div className="mb-4">
-                          <div className="text-xs font-semibold text-muted-foreground uppercase mb-2">Medications Prescribed</div>
+                          <div className="text-xs font-semibold text-muted-foreground uppercase mb-2">{t('sec_report_medications')}</div>
                           <div className="space-y-2">
                             {report.medications.map((med, idx) => (
                               <div key={idx} className="flex items-start gap-2 p-2 bg-muted/30 rounded-lg">
@@ -740,7 +746,7 @@ export default function SecretaryPage() {
                       {/* Notes */}
                       {report.notes && (
                         <div className="p-4 bg-amber-50 dark:bg-amber-950/20 rounded-xl border border-amber-200 dark:border-amber-800">
-                          <div className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase mb-1">Additional Notes</div>
+                          <div className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase mb-1">{t('sec_report_notes')}</div>
                           <div className="text-sm text-amber-900 dark:text-amber-300">{report.notes}</div>
                         </div>
                       )}
@@ -756,15 +762,15 @@ export default function SecretaryPage() {
         {activeNav === 'profiles' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <div className="mb-6">
-              <h1 className="text-2xl font-bold">Patient Profiles</h1>
-              <p className="text-muted-foreground text-sm mt-0.5">Medical profiles for all registered patients</p>
+              <h1 className="text-2xl font-bold">{t('sec_profiles_title')}</h1>
+              <p className="text-muted-foreground text-sm mt-0.5">{t('sec_profiles_subtitle')}</p>
             </div>
             {allProfiles === undefined ? (
               <div className="space-y-3">{Array(4).fill(0).map((_, i) => <div key={i} className="h-24 rounded-2xl bg-muted animate-pulse" />)}</div>
             ) : allProfiles.length === 0 ? (
               <div className="text-center py-24 text-muted-foreground">
                 <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                <p className="font-medium">No patient profiles yet</p>
+                <p className="font-medium">{t('sec_no_profiles')}</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -789,7 +795,7 @@ export default function SecretaryPage() {
                             }}
                             className="text-xs px-2 py-1 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
                           >
-                            Copy
+                            {t('sec_copy_btn')}
                           </button>
                         </div>
                       </div>
@@ -917,9 +923,9 @@ export default function SecretaryPage() {
                 <div className="text-center">
                   <Trash2 className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-muted-foreground">
-                    {trashTab === 'completed' ? (lang === 'ar' ? 'لا توجد مواعيد مكتملة' : 'No completed appointments') : (lang === 'ar' ? 'لا توجد مواعيد ملغاة' : 'No cancelled appointments')}
+                    {trashTab === 'completed' ? t('doctor_trash_empty_completed') : t('doctor_trash_empty_cancelled')}
                   </h3>
-                  <p className="text-sm text-muted-foreground mt-1">{lang === 'ar' ? 'سلة المحذوفات فارغة' : 'Trash is empty'}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{t('doctor_trash_empty_desc')}</p>
                 </div>
               </motion.div>
             ) : (
@@ -969,21 +975,21 @@ export default function SecretaryPage() {
                                     {/* Has report badge */}
                                     {apt.hasReport ? (
                                       <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200 font-medium">
-                                        {lang === 'ar' ? <><FileText className="w-3 h-3" /> ✓ تقرير</> : <><FileText className="w-3 h-3" /> ✓ Report</>}
+                                        <FileText className="w-3 h-3" /> ✓ {t('doctor_report_btn')}
                                       </span>
                                     ) : (
                                       <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 border border-gray-200 font-medium">
-                                        {lang === 'ar' ? <><FileText className="w-3 h-3" /> — بلا تقرير</> : <><FileText className="w-3 h-3" /> — No Report</>}
+                                        <FileText className="w-3 h-3" /> — {lang === 'ar' ? 'بلا تقرير' : 'No Report'}
                                       </span>
                                     )}
                                     {/* Has invoice badge */}
                                     {apt.hasInvoice ? (
                                       <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200 font-medium">
-                                        {lang === 'ar' ? <><FileText className="w-3 h-3" /> فاتورة</> : <><FileText className="w-3 h-3" /> Invoice</>}
+                                        <FileText className="w-3 h-3" /> {t('doctor_invoice_btn')}
                                       </span>
                                     ) : (
                                       <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border font-medium">
-                                        {lang === 'ar' ? <><FileText className="w-3 h-3" /> بلا فاتورة</> : <><FileText className="w-3 h-3" /> No Invoice</>}
+                                        <FileText className="w-3 h-3" /> {lang === 'ar' ? 'بلا فاتورة' : 'No Invoice'}
                                       </span>
                                     )}
                                   </div>
@@ -1043,31 +1049,31 @@ export default function SecretaryPage() {
                                             appointmentId: apt._id,
                                             status: trashTab === 'completed' ? 'completed' : ('cancelled' as const)
                                           })
-                                          toast.success(lang === 'ar' ? 'تم استعادة الموعد بنجاح' : 'Appointment restored successfully')
+                                          toast.success(t('doctor_restore_success'))
                                         } catch {
-                                          toast.error(lang === 'ar' ? 'فشل في استعادة الموعد' : 'Failed to restore appointment')
+                                          toast.error(t('doctor_restore_failed'))
                                         }
                                       }}
                                       className="flex-1 flex items-center justify-center gap-1 text-sm px-3 py-2 rounded-lg bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100 transition-colors font-medium"
                                     >
-                                      {lang === 'ar' ? <><RotateCcw className="w-4 h-4" /> استعادة</> : <><RotateCcw className="w-4 h-4" /> Restore</>}
+                                      <RotateCcw className="w-4 h-4" /> {t('doctor_restore')}
                                     </button>
                                     <button
                                       onClick={async () => {
-                                        if (confirm(lang === 'ar' ? 'سيتم إخفاء الموعد من عرضك. يمكن للمريض الاستمرار في رؤيته.' : 'This will hide the appointment from your view. The patient can still see it.')) {
+                                        if (confirm(t('doctor_delete_local_confirm'))) {
                                           try {
                                             await permanentDeleteAppointment({
                                               appointmentId: apt._id
                                             })
-                                            toast.success(lang === 'ar' ? 'تم إخفاء الموعد من عرضك' : 'Appointment removed from your view')
+                                            toast.success(t('doctor_delete_local_success'))
                                           } catch {
-                                            toast.error(lang === 'ar' ? 'فشل في إخفاء الموعد' : 'Failed to remove appointment')
+                                            toast.error(t('doctor_delete_local_failed'))
                                           }
                                         }
                                       }}
                                       className="flex-1 flex items-center justify-center gap-1 text-sm px-3 py-2 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-colors font-medium"
                                     >
-                                      <Trash2 className="w-4 h-4" /> {lang === 'ar' ? 'إخفاء من العرض' : 'Remove from view'}
+                                      <Trash2 className="w-4 h-4" /> {t('doctor_delete_local')}
                                     </button>
                                   </div>
                                 </div>
@@ -1126,13 +1132,13 @@ export default function SecretaryPage() {
               </motion.div>
 
               <h3 className="font-bold text-xl text-center mb-2">
-                {confirmModal.action === 'confirm'  ? 'Confirm Appointment?' :
-                 confirmModal.action === 'complete' ? 'Mark as Completed?'  : 'Cancel Appointment?'}
+                {confirmModal.action === 'confirm'  ? t('sec_confirm_modal_confirm') :
+                 confirmModal.action === 'complete' ? t('sec_confirm_modal_complete') : t('sec_confirm_modal_cancel')}
               </h3>
               <p className="text-muted-foreground text-sm text-center mb-7">
-                {confirmModal.action === 'confirm'  ? 'The patient will receive a confirmation email.' :
-                 confirmModal.action === 'complete' ? 'This will mark the appointment as completed.'   :
-                 'Are you sure you want to cancel this appointment?'}
+                {confirmModal.action === 'confirm'  ? t('sec_confirm_modal_desc_confirm') :
+                 confirmModal.action === 'complete' ? t('sec_confirm_modal_desc_complete') :
+                 t('sec_confirm_modal_desc_cancel')}
               </p>
 
               <div className="flex gap-3">
@@ -1142,7 +1148,7 @@ export default function SecretaryPage() {
                   onClick={() => setConfirmModal(null)}
                   disabled={processing}
                 >
-                  Go Back
+                  {t('admin_cancel')}
                 </Button>
                 <Button
                   className={cn(
@@ -1154,9 +1160,9 @@ export default function SecretaryPage() {
                   onClick={handleAction}
                   disabled={processing}
                 >
-                  {processing ? 'Processing...' :
-                    confirmModal.action === 'confirm'  ? 'Yes, Confirm'  :
-                    confirmModal.action === 'complete' ? 'Yes, Complete' : 'Yes, Cancel'}
+                  {processing ? `${t('admin_loading')}` :
+                    confirmModal.action === 'confirm'  ? t('sec_action_confirm')  :
+                    confirmModal.action === 'complete' ? t('sec_action_complete') : t('sec_action_cancel')}
                 </Button>
               </div>
             </motion.div>

@@ -175,11 +175,13 @@ export const markInvoicePaid = mutation({
             .collect();
 
         for (const admin of admins) {
+            const invoicePaidMessageAr = `✅ تم دفع الفاتورة رقم ${invoice.invoiceNumber} - المريض: ${invoice.patientName} - الدكتور: ${invoice.doctorName} - المبلغ الإجمالي: ${totalAmount} ريال`;
+            const invoicePaidMessageEn = `✅ Invoice ${invoice.invoiceNumber} paid - Patient: ${invoice.patientName} - Doctor: ${invoice.doctorName} - Total amount: ${totalAmount} SAR`;
             await ctx.db.insert("notifications", {
                 fromUserId: caller._id,
                 toUserId: admin._id,
                 type: "invoice_paid",
-                message: `✅ تم دفع الفاتورة رقم ${invoice.invoiceNumber} - المريض: ${invoice.patientName} - الدكتور: ${invoice.doctorName} - المبلغ الإجمالي: ${totalAmount} ريال`,
+                message: `${invoicePaidMessageAr}|||${invoicePaidMessageEn}`,
                 isRead: false,
             });
         }

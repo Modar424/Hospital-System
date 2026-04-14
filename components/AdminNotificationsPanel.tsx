@@ -33,7 +33,7 @@ interface AdminNotificationsProps {
 
 export default function AdminNotificationsPanel({
   isOpen, onClose }: AdminNotificationsProps) {
-  const { lang } = useI18n()
+  const { t, lang } = useI18n()
   const allNotifications = useQuery(api.adminNotifications.getAdminNotifications) as AdminNotification[] | undefined
   const trashItems = useQuery(api.trash.getAdminTrash) as AdminNotification[] | undefined
   const markAsRead = useMutation(api.adminNotifications.markAdminNotificationAsRead)
@@ -47,25 +47,34 @@ export default function AdminNotificationsPanel({
   const notifications = allNotifications?.filter(n => !n.isDeleted)
   const unreadCount = notifications?.filter(n => !n.isRead).length ?? 0
   const trashCount = trashItems?.length ?? 0
+  const dateLocale = lang === 'ar' ? 'ar-SA' : 'en-US'
+
+  const localizeMessage = (message: string) => {
+    const [arabicMessage, englishMessage] = message.split('|||')
+    if (englishMessage) {
+      return lang === 'ar' ? arabicMessage : englishMessage
+    }
+    return message
+  }
 
   const handleMarkAsRead = async (notifId: Id<"notifications">) => {
     try { await markAsRead({ notificationId: notifId }) }
-    catch { toast.error("فشل في تعيين كمقروء") }
+    catch { toast.error(t('admin_notifications_fail_mark_read')) }
   }
 
   const handleDelete = async (notifId: Id<"notifications">) => {
-    try { await deleteNotif({ notificationId: notifId }); toast.success("نُقل إلى سلة المحذوفات") }
-    catch { toast.error("فشل في الحذف") }
+    try { await deleteNotif({ notificationId: notifId }); toast.success(t('admin_notifications_moved_trash')) }
+    catch { toast.error(t('admin_notifications_fail_delete')) }
   }
 
   const handleRestore = async (notifId: Id<"notifications">) => {
-    try { await restoreNotif({ notificationId: notifId }); toast.success("تمت الاستعادة") }
-    catch { toast.error("فشل في الاستعادة") }
+    try { await restoreNotif({ notificationId: notifId }); toast.success(t('admin_notifications_restored')) }
+    catch { toast.error(t('admin_notifications_fail_restore')) }
   }
 
   const handlePermanentDelete = async (notifId: Id<"notifications">) => {
-    try { await permanentDelete({ notificationId: notifId }); toast.success("تم الحذف نهائياً") }
-    catch { toast.error("فشل في الحذف") }
+    try { await permanentDelete({ notificationId: notifId }); toast.success(t('admin_notifications_deleted')) }
+    catch { toast.error(t('admin_notifications_fail_permanent_delete')) }
   }
 
   const getIcon = (type: string) => {
@@ -75,9 +84,9 @@ export default function AdminNotificationsPanel({
   }
 
   const getTypeLabel = (type: string) => {
-    if (type === "invoice_paid") return "فاتورة مدفوعة"
-    if (type === "financial_report") return "تقرير مالي"
-    return "تقرير طبي"
+    if (type === "invoice_paid") return lang === 'ar' ? 'فاتورة مدفوعة' : 'Paid Invoice'
+    if (type === "financial_report") return lang === 'ar' ? 'تقرير مالي' : 'Financial Report'
+    return lang === 'ar' ? 'تقرير طبي' : 'Medical Report'
   }
 
   const getTypeColor = (type: string) => {
@@ -111,11 +120,11 @@ export default function AdminNotificationsPanel({
                 <Bell className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="font-bold text-lg">{lang === 'ar' ? 'إشعارات الأدمن' : 'Admin Notifications'}</h2>
+                <h2 className="font-bold text-lg">{t('admin_notifications_title')}</h2>
                 <p className="text-sm text-slate-300">
                   {activeTab === 'inbox'
-                    ? (unreadCount ? `${unreadCount} غير مقروء` : "لا توجد إشعارات جديدة")
-                    : `${trashCount} عنصر في السلة`}
+                    ? (unreadCount ? `${unreadCount} ${t('admin_notifications_unread')}` : t('admin_notifications_no_new'))
+                    : `${trashCount} ${t('admin_notifications_trash_count')}`}
                 </p>
               </div>
             </div>
@@ -132,7 +141,7 @@ export default function AdminNotificationsPanel({
                 activeTab === 'inbox' ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground")}
             >
               <Inbox className="w-4 h-4" />
-              الوارد
+              {t('admin_notifications_inbox')}
               {unreadCount > 0 && (
                 <span className="text-xs px-1.5 py-0.5 bg-primary text-white rounded-full">{unreadCount}</span>
               )}
@@ -143,7 +152,7 @@ export default function AdminNotificationsPanel({
                 activeTab === 'trash' ? "border-b-2 border-red-500 text-red-500" : "text-muted-foreground hover:text-foreground")}
             >
               <Trash2 className="w-4 h-4" />
-              سلة المحذوفات
+              {t('admin_notifications_trash')}
               {trashCount > 0 && (
                 <span className="text-xs px-1.5 py-0.5 bg-red-500 text-white rounded-full">{trashCount}</span>
               )}
@@ -175,9 +184,9 @@ export default function AdminNotificationsPanel({
                             </span>
                             {!notif.isRead && <span className="w-2 h-2 bg-primary rounded-full" />}
                           </div>
-                          <p className="text-sm text-foreground/80 line-clamp-2">{notif.message}</p>
+                          <p className="text-sm text-foreground/80 line-clamp-2">{localizeMessage(notif.message)}</p>
                           <p className="text-xs text-muted-foreground mt-1">
-                            {new Date(notif._creationTime).toLocaleDateString("ar-SA", {
+                            {new Date(notif._creationTime).toLocaleDateString(dateLocale, {
                               year: "numeric", month: "short", day: "numeric",
                               hour: "2-digit", minute: "2-digit",
                             })}
@@ -204,7 +213,7 @@ export default function AdminNotificationsPanel({
                             exit={{ opacity: 0, height: 0 }}
                             className="mt-3 pt-3 border-t border-border/50"
                           >
-                            <p className="text-sm text-foreground whitespace-pre-wrap">{notif.message}</p>
+                            <p className="text-sm text-foreground whitespace-pre-wrap">{localizeMessage(notif.message)}</p>
                           </motion.div>
                         )}
                       </AnimatePresence>
@@ -215,8 +224,8 @@ export default function AdminNotificationsPanel({
                     <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
                       <Bell className="w-8 h-8 text-muted-foreground" />
                     </div>
-                    <h3 className="font-semibold text-foreground mb-1">{lang === 'ar' ? 'لا توجد إشعارات' : 'No notifications'}</h3>
-                    <p className="text-sm text-muted-foreground">{lang === 'ar' ? 'الإشعارات المالية والفواتير المدفوعة ستظهر هنا' : 'Financial notifications and paid invoices will appear here'}</p>
+                    <h3 className="font-semibold text-foreground mb-1">{t('admin_notifications_empty_inbox_title')}</h3>
+                    <p className="text-sm text-muted-foreground">{t('admin_notifications_empty_inbox_desc')}</p>
                   </div>
                 )}
               </>
@@ -236,21 +245,21 @@ export default function AdminNotificationsPanel({
                           <span className="text-sm font-semibold text-muted-foreground">
                             {getTypeLabel(notif.type)}
                           </span>
-                          <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{notif.message}</p>
+                          <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{localizeMessage(notif.message)}</p>
                           <p className="text-xs text-muted-foreground/60 mt-1">
-                            {new Date(notif._creationTime).toLocaleDateString("ar-SA", {
+                            {new Date(notif._creationTime).toLocaleDateString(dateLocale, {
                               year: "numeric", month: "short", day: "numeric",
                             })}
                           </p>
                         </div>
                         <div className="flex flex-col gap-1">
                           <Button size="sm" variant="ghost" className="shrink-0 h-8 w-8 p-0 hover:text-green-600"
-                            title="استعادة"
+                            title={lang === 'ar' ? 'استعادة' : 'Restore'}
                             onClick={() => handleRestore(notif._id)}>
                             <RotateCcw className="w-4 h-4" />
                           </Button>
                           <Button size="sm" variant="ghost" className="shrink-0 h-8 w-8 p-0 hover:text-red-600"
-                            title="حذف نهائي"
+                            title={lang === 'ar' ? 'حذف نهائي' : 'Delete permanently'}
                             onClick={() => handlePermanentDelete(notif._id)}>
                             <Trash2 className="w-4 h-4" />
                           </Button>
@@ -263,8 +272,8 @@ export default function AdminNotificationsPanel({
                     <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
                       <Trash2 className="w-8 h-8 text-muted-foreground" />
                     </div>
-                    <h3 className="font-semibold text-foreground mb-1">{lang === 'ar' ? 'سلة المحذوفات فارغة' : 'Trash is empty'}</h3>
-                    <p className="text-sm text-muted-foreground">{lang === 'ar' ? 'العناصر المحذوفة ستظهر هنا' : 'Deleted items will appear here'}</p>
+                    <h3 className="font-semibold text-foreground mb-1">{t('admin_notifications_empty_trash_title')}</h3>
+                    <p className="text-sm text-muted-foreground">{t('admin_notifications_empty_trash_desc')}</p>
                   </div>
                 )}
               </>
@@ -274,7 +283,7 @@ export default function AdminNotificationsPanel({
           {/* Footer */}
           <div className="sticky bottom-0 bg-muted/50 border-t border-border p-4 flex justify-end">
             <Button onClick={onClose} className="bg-primary hover:bg-primary/90 text-white rounded-full">
-              إغلاق
+              {t('admin_notifications_close')}
             </Button>
           </div>
         </motion.div>

@@ -16,6 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { ArrowLeft, Loader2 } from 'lucide-react'
+import { useI18n } from '@/lib/i18n'
+import { getCategoryLabel } from '@/lib/category-labels'
 
 const baseFormSchema = z.object({
   name: z.union([z.string().min(2, "Name must be at least 2 characters"), z.literal('')]),
@@ -41,6 +43,7 @@ export default function EditDoctorPage() {
   const doctor = useQuery(api.doctors.getDoctorById, { id: doctorId as Id<"doctors"> })
   const categories = useQuery(api.categories.get)
   const updateDoctor = useMutation(api.doctors.updateDoctor)
+  const { lang } = useI18n()
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -211,7 +214,7 @@ export default function EditDoctorPage() {
                       <SelectContent>
                         {categories?.map((cat: { _id: string; name: string }) => (
                           <SelectItem key={cat._id} value={cat.name}>
-                            {cat.name}
+                            {getCategoryLabel(cat.name, lang)}
                           </SelectItem>
                         ))}
                       </SelectContent>

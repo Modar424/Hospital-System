@@ -17,6 +17,7 @@ import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import MessagePanel from '@/components/MessagePanel'
 import { useI18n } from '@/lib/i18n'
+import { getCategoryLabel } from '@/lib/category-labels'
 
 type NavItem = 'patients' | 'notifications' | 'messages' | 'profiles' | 'trash'
 
@@ -486,7 +487,7 @@ function PatientCard({ group, onMoveToTrash }: { group: { patient: Patient; appo
 
 // ── Main Page ──────────────────────────────────────────────────────────────
 export default function DoctorDashboardPage() {
-  const { t, isRTL } = useI18n()
+  const { t, isRTL, lang } = useI18n()
   const currentUser  = useQuery(api.patients.getUser)
   const groups       = useQuery(api.appointments.getMyPatientsAppointments)
   const notifications= useQuery(api.notifications.myNotifications)
@@ -943,7 +944,7 @@ export default function DoctorDashboardPage() {
                                       <span className="text-xs text-muted-foreground flex items-center gap-1">
                                         <Stethoscope className={cn('w-3 h-3', trashTab === 'completed' ? 'text-slate-600/60' : 'text-red-600/60')} />
                                         {apt.doctor.name}
-                                        {apt.doctor.category && <span className={cn(trashTab === 'completed' ? 'text-slate-600/60' : 'text-red-600/60')}>({apt.doctor.category})</span>}
+                                        {apt.doctor.category && <span className={cn(trashTab === 'completed' ? 'text-slate-600/60' : 'text-red-600/60')}>({getCategoryLabel(apt.doctor.category, lang)})</span>}
                                       </span>
                                     )}
                                     <span className="text-xs text-muted-foreground flex items-center gap-1">

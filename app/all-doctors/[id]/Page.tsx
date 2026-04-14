@@ -14,10 +14,13 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { useAuth } from '@clerk/nextjs'
 import { SignInButton } from '@clerk/nextjs'
+import { useI18n } from '@/lib/i18n'
+import { getCategoryLabel } from '@/lib/category-labels'
 
 export default function DoctorProfilePage() {
   const params = useParams()
   const { isSignedIn } = useAuth()
+  const { lang } = useI18n()
   const id = params.id as Id<"doctors">
   const doctor = useQuery(api.doctors.getDoctorById, { id })
   const createAppointment = useMutation(api.appointments.createAppointment)
@@ -91,7 +94,7 @@ export default function DoctorProfilePage() {
             </div>
             <div className="space-y-2 flex-1">
               <h1 className="text-2xl font-bold text-foreground">{doctor.name}</h1>
-              <Badge className="bg-primary/10 text-primary border-0 text-sm">{doctor.category}</Badge>
+              <Badge className="bg-primary/10 text-primary border-0 text-sm">{getCategoryLabel(doctor.category, lang)}</Badge>
               <div className="flex items-center gap-1 mt-1">
                 {[1,2,3,4,5].map((s) => (
                   <Star key={s} className={`w-4 h-4 ${s <= 4 ? 'fill-yellow-400 text-yellow-400' : 'fill-gray-200 text-gray-200'}`} />
@@ -113,7 +116,7 @@ export default function DoctorProfilePage() {
           >
             {[
               { icon: Briefcase, label: 'Experience', value: `${doctor.experience}+ yrs` },
-              { icon: Award, label: 'Specialty', value: doctor.category },
+              { icon: Award, label: 'Specialty', value: getCategoryLabel(doctor.category, lang) },
               { icon: Clock, label: 'Availability', value: 'Mon – Fri' },
             ].map(({ icon: Icon, label, value }) => (
               <div key={label} className="bg-card border border-border rounded-xl p-4 text-center">

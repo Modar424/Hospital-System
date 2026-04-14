@@ -9,6 +9,7 @@ import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { useState } from 'react'
 import { useI18n } from '@/lib/i18n'
+import { getCategoryLabel } from '@/lib/category-labels'
 import { BookAppointmentModal } from './BookAppointmentModal'
 
 interface DoctorCardProps {
@@ -20,7 +21,7 @@ function DoctorCard({ doctor, index = 0 }: DoctorCardProps) {
   const [imgError, setImgError] = useState(false)
   const [hovered, setHovered] = useState(false)
   const [isBooking, setIsBooking] = useState(false)
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
 
   return (
     <motion.div
@@ -74,7 +75,7 @@ function DoctorCard({ doctor, index = 0 }: DoctorCardProps) {
             transition={{ duration: 0.3 }}
           >
             <Badge className="bg-primary/90 text-white border-0 text-xs backdrop-blur-sm shadow-lg">
-              {doctor.category}
+              {getCategoryLabel(doctor.category, lang)}
             </Badge>
           </motion.div>
 

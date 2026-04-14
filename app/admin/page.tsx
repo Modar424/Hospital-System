@@ -28,6 +28,7 @@ import { cn } from '@/lib/utils'
 import AdminNotificationsPanel from '@/components/AdminNotificationsPanel'
 import { FileText } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
+import { getCategoryLabel } from '@/lib/category-labels'
 
 type NavItem = 'dashboard' | 'doctors' | 'users' | 'notify' | 'pharmacy' | 'reports'
 type Role = 'admin' | 'guest' | 'doctor' | 'secretary'
@@ -91,7 +92,7 @@ export default function AdminDashboardPage() {
     { key: 'doctors',   label: lang === 'ar' ? 'الأطباء' : 'Doctors',            icon: Stethoscope     },
     { key: 'users',     label: lang === 'ar' ? 'المستخدمون والأدوار' : 'Users & Roles',      icon: ShieldCheck     },
     { key: 'notify',    label: lang === 'ar' ? 'إرسال إشعار' : 'Send Notification',  icon: Bell            },
-    { key: 'reports',   label: lang === 'ar' ? 'التقارير والإشعارات' : 'Reports & Notifs',   icon: FileText        },
+    { key: 'reports',   label: t('admin_reports'),   icon: FileText        },
   ]
 
   const [doctorPickModal, setDoctorPickModal] = useState<{ userId: Id<"patients">; userName: string } | null>(null)
@@ -107,7 +108,7 @@ export default function AdminDashboardPage() {
 
   const handleSendNotif = async () => {
     if (!notifTarget || !notifMsg.trim()) {
-      toast.error('Please select a doctor and write a message')
+      toast.error(t('admin_notif_validation'))
       return
     }
     setSending(true)
@@ -117,12 +118,12 @@ export default function AdminDashboardPage() {
         message: notifMsg,
         scheduledAt: notifDate ? new Date(notifDate).getTime() : undefined,
       })
-      toast.success('Notification sent to doctor!')
+      toast.success(t('admin_notif_success'))
       setNotifMsg('')
       setNotifDate('')
       setNotifTarget('')
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Failed to send')
+      toast.error(e instanceof Error ? e.message : t('admin_notif_fail'))
     } finally {
       setSending(false)
     }
@@ -133,10 +134,10 @@ export default function AdminDashboardPage() {
     try {
       setIsDeleting(true)
       await deleteDoctor({ doctorId: deleteModal.id })
-      toast.success(` ${deleteModal.name} deleted successfully`)
+      toast.success(`${deleteModal.name} ${t('admin_delete_success')}`)
       setDeleteModal(null)
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Failed to delete doctor')
+      toast.error(e instanceof Error ? e.message : t('admin_delete_fail'))
     } finally {
       setIsDeleting(false)
     }
@@ -152,7 +153,7 @@ export default function AdminDashboardPage() {
           </div>
           <div>
             <div className="font-bold text-white text-sm">HealWell</div>
-            <div className="text-xs text-slate-400">Admin Panel</div>
+            <div className="text-xs text-slate-400">{t('admin_panel')}</div>
           </div>
         </div>
 
@@ -188,7 +189,7 @@ export default function AdminDashboardPage() {
         <div className="pt-4 border-t border-slate-800">
           <Link href="/">
             <Button variant="ghost" size="sm" className="w-full text-slate-400 hover:text-white justify-start gap-2">
-              ← Back to Site
+              {t('admin_back_site')}
             </Button>
           </Link>
         </div>
@@ -201,7 +202,7 @@ export default function AdminDashboardPage() {
         {activeNav === 'dashboard' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <div className="flex items-center justify-between mb-6">
-              <h1 className="text-2xl font-bold">Dashboard Overview</h1>
+              <h1 className="text-2xl font-bold">{t('admin_overview')}</h1>
               <div className="text-sm text-muted-foreground">
                 {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
               </div>
@@ -233,7 +234,7 @@ export default function AdminDashboardPage() {
                   <TrendingUp className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <div className="text-sm text-muted-foreground">Most Booked Doctor</div>
+                  <div className="text-sm text-muted-foreground">{t('admin_most_booked')}</div>
                   <div className="font-semibold text-lg">{mostBooked}</div>
                 </div>
               </div>
@@ -242,16 +243,16 @@ export default function AdminDashboardPage() {
             {/* Recent appointments — view only */}
             <div className="bg-card border border-border rounded-2xl p-5">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="font-semibold">Recent Appointments</h2>
+                <h2 className="font-semibold">{t('admin_recent_appts')}</h2>
                 <Badge className="bg-muted text-muted-foreground text-xs border-0">
-                  View only — managed by Secretary
+                  {t('admin_view_only')}
                 </Badge>
               </div>
               <div className="space-y-2">
                 {appointments?.slice(0, 6).map(apt => (
                   <div key={apt._id} className="flex items-center justify-between py-2.5 border-b border-border last:border-0">
                     <div>
-                      <div className="text-sm font-medium">{apt.patient?.name ?? 'Unknown'}</div>
+                      <div className="text-sm font-medium">{apt.patient?.name ?? t('admin_unknown_patient')}</div>
                       <div className="text-xs text-muted-foreground">
                         {apt.doctor?.name ? `${apt.doctor.name}` : apt.department} · {new Date(apt.date).toLocaleDateString()}
                       </div>
@@ -267,7 +268,7 @@ export default function AdminDashboardPage() {
                   </div>
                 ))}
                 {(!appointments || appointments.length === 0) && (
-                  <div className="text-center py-8 text-muted-foreground text-sm">No appointments yet.</div>
+                  <div className="text-center py-8 text-muted-foreground text-sm">{t('admin_no_appts')}</div>
                 )}
               </div>
             </div>
@@ -278,10 +279,10 @@ export default function AdminDashboardPage() {
         {activeNav === 'doctors' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <div className="flex items-center justify-between mb-6">
-              <h1 className="text-2xl font-bold">Doctors</h1>
+              <h1 className="text-2xl font-bold">{t('admin_doctors')}</h1>
               <Link href="/admin/doctors/add">
                 <Button className="bg-primary hover:bg-primary/90 text-white gap-2 rounded-full">
-                  <Plus className="w-4 h-4" /> Add Doctor
+                  <Plus className="w-4 h-4" /> {t('admin_add_doctor')}
                 </Button>
               </Link>
             </div>
@@ -300,29 +301,29 @@ export default function AdminDashboardPage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="font-semibold truncate">{doc.name}</div>
-                    <div className="text-xs text-muted-foreground">{doc.category}</div>
+                    <div className="text-xs text-muted-foreground">{getCategoryLabel(doc.category, lang)}</div>
                     <div className="text-xs text-muted-foreground mt-0.5">{doc.location}</div>
                     <Badge className="mt-2 text-xs bg-primary/10 text-primary border-0">
-                      {doc.experience}+ yrs exp
+                      {doc.experience}+ {t('admin_yrs_exp')}
                     </Badge>
                     <div className="mt-3 flex items-center gap-1.5 flex-wrap">
                       {/* Set Password Button */}
                       <button
                         onClick={() => setPassModal({ id: doc._id, name: doc.name })}
                         className="text-xs px-2.5 py-1 rounded-full border border-border text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors"
-                        title="Set dashboard password for this doctor"
+                        title={t('admin_set_pass_title')}
                       >
-                        🔑 Set Password
+                        {t('admin_set_pass_btn')}
                       </button>
 
                       {/* Edit Button */}
                       <Link href={`/admin/doctors/${doc._id}/edit`}>
                         <button
                           className="text-xs px-2.5 py-1 rounded-full border border-border text-muted-foreground hover:border-blue-400/40 hover:text-blue-600 transition-colors flex items-center gap-1"
-                          title="Edit doctor information"
+                          title={t('admin_edit')}
                         >
                           <Edit2 className="w-3 h-3" />
-                          Edit
+                          {t('admin_edit')}
                         </button>
                       </Link>
 
@@ -332,23 +333,24 @@ export default function AdminDashboardPage() {
                           <button
                             onClick={() => setDeleteModal({ id: doc._id, name: doc.name })}
                             className="text-xs px-2.5 py-1 rounded-full border border-border text-red-600/60 hover:border-red-400/40 hover:text-red-600 transition-colors flex items-center gap-1"
-                            title="Delete this doctor"
+                            title={t('admin_delete_doctor')}
                           >
                             <Trash2 className="w-3 h-3" />
-                            Delete
+                            {t('admin_delete')}
                           </button>
                         </AlertDialogTrigger>
                         {deleteModal?.id === doc._id && (
                           <AlertDialogContent className="max-w-md">
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Doctor</AlertDialogTitle>
+                              <AlertDialogTitle>{t('admin_delete_title')}</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Are you sure you want to delete <strong>{deleteModal.name}</strong>? 
-                                This action cannot be undone and will also delete all associated appointments.
+                                {t('admin_delete_desc').replace('هذا الطبيب؟', `<strong>${deleteModal.name}</strong>؟`)}
+                                {lang !== 'ar' && <><strong>{deleteModal.name}</strong>? This action cannot be undone and will also delete all associated appointments.</>}
+                                {lang === 'ar' && <>هل أنت متأكد من حذف <strong>{deleteModal.name}</strong>؟ لا يمكن التراجع عن هذا الإجراء وسيؤدي إلى حذف جميع المواعيد المرتبطة.</>}
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <div className="flex gap-3 justify-end">
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogCancel>{t('admin_cancel')}</AlertDialogCancel>
                               <AlertDialogAction
                                 onClick={() => handleDeleteDoctor()}
                                 className="bg-red-600 hover:bg-red-700 text-white"
@@ -357,10 +359,10 @@ export default function AdminDashboardPage() {
                                 {isDeleting ? (
                                   <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin inline" />
-                                    Deleting...
+                                    {t('admin_deleting')}
                                   </>
                                 ) : (
-                                  'Delete'
+                                  t('admin_delete')
                                 )}
                               </AlertDialogAction>
                             </div>
@@ -380,9 +382,9 @@ export default function AdminDashboardPage() {
         {/* ══ USERS & ROLES ═══════════════════════════════════════════════ */}
         {activeNav === 'users' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <h1 className="text-2xl font-bold mb-2">Users & Roles</h1>
+            <h1 className="text-2xl font-bold mb-2">{t('admin_users_title')}</h1>
             <p className="text-muted-foreground text-sm mb-6">
-              Assign roles: Patient (guest), Doctor, Secretary, or Admin.
+              {t('admin_users_subtitle')}
             </p>
 
             <div className="bg-card border border-border rounded-2xl overflow-hidden">
@@ -390,7 +392,7 @@ export default function AdminDashboardPage() {
                 <table className="w-full text-sm">
                   <thead className="bg-muted/50 border-b border-border">
                     <tr>
-                      {['Name', 'Email', 'Current Role', 'Change Role'].map(h => (
+                      {[t('admin_col_name'), t('admin_col_email'), t('admin_col_role'), t('admin_col_change')].map(h => (
                         <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">{h}</th>
                       ))}
                     </tr>
@@ -409,7 +411,7 @@ export default function AdminDashboardPage() {
                           <div className="flex flex-wrap gap-1.5">
                             {u.role === 'admin' && adminCount === 1 && (
                               <span className="text-[11px] px-2.5 py-1 rounded-full border bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-800">
-                                Last admin
+                                {t('admin_last_admin')}
                               </span>
                             )}
                             {(['guest', 'doctor', 'secretary', 'admin'] as Role[]).map(r => (
@@ -440,7 +442,7 @@ export default function AdminDashboardPage() {
                   </tbody>
                 </table>
                 {allUsers?.length === 0 && (
-                  <div className="text-center py-12 text-muted-foreground text-sm">No users found.</div>
+                  <div className="text-center py-12 text-muted-foreground text-sm">{t('admin_no_users')}</div>
                 )}
               </div>
             </div>
@@ -450,18 +452,18 @@ export default function AdminDashboardPage() {
         {/* ══ SEND NOTIFICATION ═══════════════════════════════════════════ */}
         {activeNav === 'notify' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-xl">
-            <h1 className="text-2xl font-bold mb-2">Send Notification to Doctor</h1>
+            <h1 className="text-2xl font-bold mb-2">{t('admin_notify_title')}</h1>
             <p className="text-muted-foreground text-sm mb-8">
-              Send a meeting request or message directly to a doctors dashboard.
+              {t('admin_notify_subtitle')}
             </p>
 
             <div className="bg-card border border-border rounded-2xl p-6 space-y-5">
               {/* Doctor selector */}
               <div>
-                <label className="block text-sm font-medium mb-2">Select Doctor</label>
+                <label className="block text-sm font-medium mb-2">{t('admin_select_doctor')}</label>
                 {doctorUsers.length === 0 ? (
                   <div className="text-sm text-muted-foreground bg-muted/40 rounded-xl p-4">
-                    No users with doctor role yet. Go to <button onClick={() => setActiveNav('users')} className="text-primary underline">Users & Roles</button> to assign doctor roles.
+                    {t('admin_no_doctor_users')} <button onClick={() => setActiveNav('users')} className="text-primary underline">{t('admin_no_doctor_users2')}</button> {t('admin_no_doctor_users3')}
                   </div>
                 ) : (
                   <div className="grid gap-2">
@@ -495,7 +497,7 @@ export default function AdminDashboardPage() {
               {/* Meeting time (optional) */}
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Meeting Time <span className="text-muted-foreground font-normal">(optional)</span>
+                  {t('admin_meeting_time')} <span className="text-muted-foreground font-normal">{t('admin_meeting_optional')}</span>
                 </label>
                 <input
                   type="datetime-local"
@@ -507,12 +509,12 @@ export default function AdminDashboardPage() {
 
               {/* Message */}
               <div>
-                <label className="block text-sm font-medium mb-2">Message</label>
+                <label className="block text-sm font-medium mb-2">{t('admin_message_label')}</label>
                 <textarea
                   value={notifMsg}
                   onChange={e => setNotifMsg(e.target.value)}
                   rows={4}
-                  placeholder="e.g. You have a meeting with the director tomorrow at 10 AM..."
+                  placeholder={t('admin_message_placeholder')}
                   className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition resize-none"
                 />
                 <div className="text-xs text-muted-foreground mt-1 text-right">{notifMsg.length}/500</div>
@@ -524,7 +526,7 @@ export default function AdminDashboardPage() {
                 disabled={sending || !notifTarget || !notifMsg.trim()}
               >
                 <Send className="w-4 h-4" />
-                {sending ? 'Sending...' : 'Send Notification'}
+                {sending ? t('admin_sending_btn') : t('admin_send_btn')}
               </Button>
             </div>
           </motion.div>
@@ -543,7 +545,7 @@ export default function AdminDashboardPage() {
               onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-5">
                 <div>
-                  <h3 className="font-bold text-lg">Set Dashboard Password</h3>
+                  <h3 className="font-bold text-lg">{t('admin_set_pass_title')}</h3>
                   <p className="text-sm text-muted-foreground mt-0.5">{passModal.name}</p>
                 </div>
                 <button onClick={() => { setPassModal(null); setNewPass('') }} className="p-2 hover:bg-muted rounded-lg">
@@ -551,20 +553,20 @@ export default function AdminDashboardPage() {
                 </button>
               </div>
               <input type="text" value={newPass} onChange={e => setNewPass(e.target.value)}
-                placeholder="Enter password for this doctor"
+                placeholder={t('admin_set_pass_placeholder')}
                 className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 mb-4" />
               <div className="flex gap-3">
-                <Button variant="outline" className="flex-1 rounded-full" onClick={() => { setPassModal(null); setNewPass('') }}>Cancel</Button>
+                <Button variant="outline" className="flex-1 rounded-full" onClick={() => { setPassModal(null); setNewPass('') }}>{t('admin_cancel')}</Button>
                 <Button className="flex-1 bg-primary hover:bg-primary/90 text-white rounded-full"
                   disabled={!newPass.trim()}
                   onClick={async () => {
                     try {
                       await setDoctorPass({ doctorId: passModal.id, password: newPass.trim() })
-                      toast.success('Password set successfully!')
+                      toast.success(t('admin_pass_success'))
                       setPassModal(null); setNewPass('')
-                    } catch { toast.error('Failed to set password') }
+                    } catch { toast.error(t('admin_pass_fail')) }
                   }}>
-                  Save Password
+                  {t('admin_save_password')}
                 </Button>
               </div>
             </motion.div>
@@ -591,9 +593,9 @@ export default function AdminDashboardPage() {
             >
               <div className="flex items-center justify-between mb-5">
                 <div>
-                  <h3 className="font-bold text-lg">Link to Doctor Profile</h3>
+                  <h3 className="font-bold text-lg">{t('admin_link_doctor')}</h3>
                   <p className="text-sm text-muted-foreground mt-0.5">
-                    Select a doctor profile for <strong>{doctorPickModal.userName}</strong>
+                    {t('admin_link_doctor_subtitle')} <strong>{doctorPickModal.userName}</strong>
                   </p>
                 </div>
                 <button onClick={() => setDoctorPickModal(null)} className="p-2 hover:bg-muted rounded-lg">
@@ -616,13 +618,13 @@ export default function AdminDashboardPage() {
                     </div>
                     <div>
                       <div className="font-medium text-sm">{doc.name}</div>
-                      <div className="text-xs text-muted-foreground">{doc.category} · {doc.location}</div>
+                      <div className="text-xs text-muted-foreground">{getCategoryLabel(doc.category, lang)} · {doc.location}</div>
                     </div>
                   </button>
                 ))}
                 {(!doctors || doctors.length === 0) && (
                   <div className="text-center py-8 text-muted-foreground text-sm">
-                    No doctors found. <Link href="/admin/doctors/add" className="text-primary underline">Add a doctor first</Link>.
+                    {t('admin_no_doctors_found')} <Link href="/admin/doctors/add" className="text-primary underline">{t('admin_add_doctor_first')}</Link>.
                   </div>
                 )}
               </div>
@@ -632,7 +634,7 @@ export default function AdminDashboardPage() {
                 className="w-full rounded-full"
                 onClick={() => setDoctorPickModal(null)}
               >
-                Cancel
+                {t('admin_cancel')}
               </Button>
             </motion.div>
           </motion.div>

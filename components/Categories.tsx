@@ -6,12 +6,13 @@ import * as Icons from "lucide-react"
 import { LucideIcon, ChevronLeft, ChevronRight } from "lucide-react"
 import { motion } from "framer-motion"
 import { useI18n } from '@/lib/i18n'
+import { getCategoryLabel } from '@/lib/category-labels'
 
 function Categories() {
   const categories = useQuery(api.categories.get)
   const scrollRef = useRef<HTMLDivElement>(null)
   const [isPaused, setIsPaused] = useState(false)
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
 
   useEffect(() => {
     if (!categories || categories.length === 0) return
@@ -36,7 +37,7 @@ function Categories() {
   return (
     <section className="py-20 bg-background relative overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute top-0 left-1/4 w-100 h-100 bg-primary/5 rounded-full blur-3xl" />
         <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-teal-300/10 rounded-full blur-3xl" />
       </div>
 
@@ -72,9 +73,9 @@ function Categories() {
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => scroll('left')}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 -ml-4 w-10 h-10 bg-card border border-border rounded-full shadow-lg flex items-center justify-center hover:bg-primary hover:text-white hover:border-primary transition-all"
+            className="absolute left-0 top-1 -translate-y-1/2 z-10 -ml-4 w-10 h-10 bg-card border border-border rounded-full shadow-lg flex items-center justify-center hover:bg-primary hover:text-white hover:border-primary transition-all"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="w-4 h-4" />
           </motion.button>
 
           <div
@@ -84,6 +85,7 @@ function Categories() {
           >
             {categories?.map((category, index) => {
               const IconComponent = (Icons[category.icon as keyof typeof Icons] || Icons.Activity) as LucideIcon
+              const displayName = getCategoryLabel(category.name, lang)
               return (
                 <motion.div
                   key={category._id}
@@ -103,7 +105,7 @@ function Categories() {
                     <IconComponent className="w-7 h-7 text-primary group-hover:text-white transition-colors duration-300" />
                   </motion.div>
                   <h3 className="font-semibold text-sm group-hover:text-primary transition-colors leading-tight">
-                    {category.name}
+                    {displayName}
                   </h3>
                   <motion.div className="w-0 h-0.5 bg-primary rounded-full group-hover:w-8 transition-all duration-300" />
                 </motion.div>

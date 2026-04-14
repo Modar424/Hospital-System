@@ -16,6 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { MapPin, Phone, GraduationCap, Briefcase, Stethoscope } from 'lucide-react';
+import { useI18n } from '@/lib/i18n';
+import { getCategoryLabel } from '@/lib/category-labels';
 
 const formSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters"),
@@ -34,6 +36,7 @@ function Page() {
     const router = useRouter();
     const categories = useQuery(api.categories.get);
     const createDoctor = useMutation(api.doctors.createDoctor);
+    const { lang } = useI18n();
 
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -138,7 +141,7 @@ function Page() {
                                     </SelectTrigger>
                                     <SelectContent>
                                         {categories?.map((cat) => (
-                                            <SelectItem key={cat._id} value={cat.name}>{cat.name}</SelectItem>
+                                            <SelectItem key={cat._id} value={cat.name}>{getCategoryLabel(cat.name, lang)}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
@@ -212,7 +215,7 @@ function Page() {
                                     </div>
                                 )}
                                 <div className="absolute top-4 right-4 bg-white dark:bg-gray-900 px-3 py-1 rounded-full text-xs font-medium shadow-sm">
-                                    {previewData.category || "Specialty"}
+                                    {previewData.category ? getCategoryLabel(previewData.category, lang) : "Specialty"}
                                 </div>
                             </div>
                             <CardHeader>
