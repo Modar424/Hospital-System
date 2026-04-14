@@ -49,7 +49,7 @@ export default function MessagePanel({ userRole, isOpen, onClose }: MessagePanel
   const restoreNotif = useMutation(api.trash.restoreNotification)
   const permanentDelete = useMutation(api.trash.permanentDeleteNotification)
 
-  const { lang } = useI18n()
+  const { lang, t } = useI18n()
   const [activeTab, setActiveTab] = useState<'inbox' | 'trash'>('inbox')
   const [newMessage, setNewMessage] = useState('')
   const [isSending, setIsSending] = useState(false)
@@ -96,11 +96,11 @@ export default function MessagePanel({ userRole, isOpen, onClose }: MessagePanel
   }
 
   const handlePermanentDelete = async (id: Id<"notifications">) => {
-    try { await permanentDelete({ notificationId: id }); toast.success("تم الحذف نهائياً") }
-    catch { toast.error("فشل في الحذف") }
+    try { await permanentDelete({ notificationId: id }); toast.success(t('msg_deleted_success')) }
+    catch { toast.error(t('msg_delete_failed')) }
   }
 
-  const panelTitle = userRole === 'doctor' ? 'رسائل السكرتيرة' : 'رسائل الأطباء'
+  const panelTitle = userRole === 'doctor' ? t('msg_panel_secretary') : t('msg_panel_doctor')
 
   if (!isOpen) return null
 
@@ -131,8 +131,8 @@ export default function MessagePanel({ userRole, isOpen, onClose }: MessagePanel
                 <h2 className="font-bold text-base">{panelTitle}</h2>
                 <p className="text-xs text-purple-200">
                   {activeTab === 'inbox'
-                    ? (unreadCount ? `${unreadCount} جديدة` : "لا توجد رسائل جديدة")
-                    : `${trashCount} في السلة`}
+                    ? (unreadCount ? `${unreadCount} ${t('msg_no_new')}` : t('msg_no_new'))
+                    : `${trashCount} ${t('msg_in_trash')}`}
                 </p>
               </div>
             </div>
@@ -149,7 +149,7 @@ export default function MessagePanel({ userRole, isOpen, onClose }: MessagePanel
                 activeTab === 'inbox' ? "border-b-2 border-violet-600 text-violet-600" : "text-muted-foreground hover:text-foreground")}
             >
               <Inbox className="w-3.5 h-3.5" />
-              الرسائل
+              {t('msg_messages_tab')}
               {(unreadCount ?? 0) > 0 && (
                 <span className="text-xs px-1.5 py-0.5 bg-violet-600 text-white rounded-full">{unreadCount}</span>
               )}
@@ -160,7 +160,7 @@ export default function MessagePanel({ userRole, isOpen, onClose }: MessagePanel
                 activeTab === 'trash' ? "border-b-2 border-red-500 text-red-500" : "text-muted-foreground hover:text-foreground")}
             >
               <Trash2 className="w-3.5 h-3.5" />
-              المحذوفات
+              {t('msg_deleted_tab')}
               {trashCount > 0 && (
                 <span className="text-xs px-1.5 py-0.5 bg-red-500 text-white rounded-full">{trashCount}</span>
               )}
@@ -211,7 +211,7 @@ export default function MessagePanel({ userRole, isOpen, onClose }: MessagePanel
                         <button
                           onClick={() => handleMarkAsRead(msg._id)}
                           className="w-6 h-6 rounded-full bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center hover:bg-violet-200 transition"
-                          title="تعيين كمقروء"
+                          title={t('msg_mark_read')}
                         >
                           <span className="text-[8px] text-violet-600 font-bold">✓</span>
                         </button>
@@ -219,7 +219,7 @@ export default function MessagePanel({ userRole, isOpen, onClose }: MessagePanel
                       <button
                         onClick={() => handleDelete(msg._id)}
                         className="w-6 h-6 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center hover:bg-red-100 transition"
-                        title="حذف"
+                        title={t('msg_delete')}
                       >
                         <Trash2 className="w-3 h-3 text-red-400" />
                       </button>
@@ -232,9 +232,9 @@ export default function MessagePanel({ userRole, isOpen, onClose }: MessagePanel
                     <MessageSquare className="w-7 h-7 text-violet-400" />
                   </div>
                   <p className="font-medium text-foreground text-sm">
-                    {userRole === 'doctor' ? 'لا توجد رسائل من السكرتيرات' : 'لا توجد رسائل من الأطباء'}
+                    {userRole === 'doctor' ? t('msg_no_from_secretaries') : t('msg_no_from_doctors')}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">{lang === 'ar' ? 'الرسائل الجديدة ستظهر هنا' : 'New messages will appear here'}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t('msg_new_appear_here')}</p>
                 </div>
               )
             ) : (
@@ -257,11 +257,11 @@ export default function MessagePanel({ userRole, isOpen, onClose }: MessagePanel
                     </div>
                     <div className="flex flex-col gap-1">
                       <button onClick={() => handleRestore(msg._id)}
-                        className="w-6 h-6 rounded-full bg-green-50 flex items-center justify-center hover:bg-green-100 transition" title="استعادة">
+                        className="w-6 h-6 rounded-full bg-green-50 flex items-center justify-center hover:bg-green-100 transition" title={t('msg_restore')}>
                         <RotateCcw className="w-3 h-3 text-green-600" />
                       </button>
                       <button onClick={() => handlePermanentDelete(msg._id)}
-                        className="w-6 h-6 rounded-full bg-red-50 flex items-center justify-center hover:bg-red-100 transition" title="حذف نهائي">
+                        className="w-6 h-6 rounded-full bg-red-50 flex items-center justify-center hover:bg-red-100 transition" title={t('msg_delete_permanently')}>
                         <Trash2 className="w-3 h-3 text-red-500" />
                       </button>
                     </div>
@@ -272,7 +272,7 @@ export default function MessagePanel({ userRole, isOpen, onClose }: MessagePanel
                   <div className="w-14 h-14 bg-muted rounded-full flex items-center justify-center mb-3">
                     <Trash2 className="w-7 h-7 text-muted-foreground" />
                   </div>
-                  <p className="font-medium text-foreground text-sm">{lang === 'ar' ? 'سلة المحذوفات فارغة' : 'Trash is empty'}</p>
+                  <p className="font-medium text-foreground text-sm">{t('msg_trash_empty')}</p>
                 </div>
               )
             )}
@@ -289,7 +289,7 @@ export default function MessagePanel({ userRole, isOpen, onClose }: MessagePanel
                   className="w-full px-3 py-2 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-violet-500/30 disabled:opacity-50 text-sm"
                 >
                   <option value="">
-                    {userRole === 'doctor' ? '← اختر سكرتيرة' : '← اختر دكتور'}
+                    {userRole === 'doctor' ? t('msg_select_secretary') : t('msg_select_doctor')}
                   </option>
                   {recipients.map((r) => (
                     <option key={r._id} value={r._id}>{r.name}</option>
@@ -301,7 +301,7 @@ export default function MessagePanel({ userRole, isOpen, onClose }: MessagePanel
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage() } }}
-                  placeholder={userRole === 'doctor' ? 'اكتب رسالة...' : 'اكتب رسالة...'}
+                  placeholder={t('msg_type_message')}
                   rows={2}
                   disabled={isSending}
                   className="flex-1 px-4 py-2.5 rounded-2xl border border-border bg-muted/30 focus:outline-none focus:ring-2 focus:ring-violet-500/30 disabled:opacity-50 text-sm resize-none"

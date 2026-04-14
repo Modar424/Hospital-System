@@ -648,12 +648,12 @@ export default function AppointmentsPage() {
             transition={{ delay: 0.1 }}
             className="inline-block text-xs font-semibold uppercase tracking-widest text-primary bg-primary/10 px-4 py-1.5 rounded-full mb-4"
           >
-            {lang === 'ar' ? 'لوحة المواعيد' : 'My Dashboard'}
+            {t('doctor_dashboard_label')}
           </motion.span>
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
               <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
-                {lang === 'ar' ? 'مواعيدي' : 'My Appointments'}
+                {t('nav_appointments')}
               </h1>
               <p className="text-muted-foreground">
                 {lang === 'ar' ? 'تتبّع وأدر مواعيدك والفواتير الطبية' : 'Track your appointments and medical invoices'}
