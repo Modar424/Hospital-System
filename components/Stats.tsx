@@ -30,16 +30,16 @@ function Stats() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
-              className="flex flex-col items-center text-white text-center"
+              className="flex flex-col items-center to-teal-600 text-center"
             >
-              <div className="mb-3 p-3 bg-white/15 backdrop-blur-sm rounded-2xl">
+              <div className="mb-3 p-3 bg-white/70 backdrop-blur-sm rounded-2xl">
                 <item.icon className="w-7 h-7" />
               </div>
               <h3 className="text-4xl font-bold mb-1">
                 {stats ? item.value.toLocaleString() : '…'}
                 {stats && item.suffix}
               </h3>
-              <p className="text-white/75 text-sm font-medium">{item.label}</p>
+              <p className="to-teal-600 text-sm font-medium">{item.label}</p>
             </motion.div>
           ))}
         </div>

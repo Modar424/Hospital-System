@@ -14,6 +14,7 @@ import { toast } from "sonner"
 import Link from "next/link"
 import { SignInButton } from "@clerk/nextjs"
 import { useI18n } from "@/lib/i18n"
+import Image from "next/image"
 
 type Gender = "male" | "female" | "other"
 
@@ -42,7 +43,28 @@ export default function PatientProfileSetupPage() {
   const [newMedical, setNewMedical] = useState("")
   const [newAllergy, setNewAllergy] = useState("")
 
-  const { t, lang } = useI18n()
+  const { lang } = useI18n()
+
+  // Load existing profile data when user wants to edit
+  const loadProfileData = () => {
+    if (myProfile) {
+      setFormData({
+        phone: myProfile.phone || "",
+        dateOfBirth: myProfile.dateOfBirth || "",
+        gender: (myProfile.gender as Gender) || "other",
+        bloodType: myProfile.bloodType || "O+",
+        address: myProfile.address || "",
+        emergencyContact: myProfile.emergencyContact || "",
+        medicalHistory: myProfile.medicalHistory || [],
+        allergies: myProfile.allergies || [],
+        notes: myProfile.notes || "",
+      })
+      if (myProfile.profileImage) {
+        setProfileImage(myProfile.profileImage)
+        setImagePreview(myProfile.profileImage)
+      }
+    }
+  }
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -118,7 +140,7 @@ export default function PatientProfileSetupPage() {
       })
       toast.success(lang === 'ar' ? 'تم حفظ ملفك الشخصي بنجاح!' : 'Profile saved successfully!')
       setStep(3)
-    } catch (e) {
+    } catch {
       toast.error(lang === 'ar' ? 'حدث خطأ في حفظ الملف' : 'Error saving profile')
     } finally {
       setLoading(false)
@@ -127,7 +149,7 @@ export default function PatientProfileSetupPage() {
 
   if (!isSignedIn) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-slate-950 dark:to-slate-900 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-linear-to-b from-blue-50 to-white dark:from-slate-950 dark:to-slate-900 flex items-center justify-center px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -150,9 +172,9 @@ export default function PatientProfileSetupPage() {
     )
   }
 
-  if (myProfile && step !== 2) {
+  if (myProfile && step !== 1 && step !== 2) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-slate-950 dark:to-slate-900 p-4">
+      <div className="min-h-screen bg-linear-to-b from-blue-50 to-white dark:from-slate-950 dark:to-slate-900 p-4">
         <div className="max-w-2xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -196,7 +218,10 @@ export default function PatientProfileSetupPage() {
               <Button
                 variant="outline"
                 className="w-full rounded-full gap-2 py-6"
-                onClick={() => setStep(2)}
+                onClick={() => {
+                  loadProfileData()
+                  setStep(1)
+                }}
               >
                 <FileText className="w-5 h-5" />
                 {lang === 'ar' ? 'تحديث البيانات' : 'Update Profile'}
@@ -209,7 +234,7 @@ export default function PatientProfileSetupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-slate-950 dark:to-slate-900 p-4">
+    <div className="min-h-screen bg-linear-to-b from-blue-50 to-white dark:from-slate-950 dark:to-slate-900 p-4">
       <div className="max-w-4xl mx-auto">
         {/* Progress Indicator */}
         <div className="mb-8">
@@ -268,7 +293,7 @@ export default function PatientProfileSetupPage() {
               <div className="flex gap-4 items-start">
                 {imagePreview ? (
                   <div className="relative">
-                    <img
+                    <Image
                       src={imagePreview}
                       alt="Preview"
                       className="w-24 h-24 rounded-xl object-cover border-2 border-blue-600"
@@ -406,6 +431,15 @@ export default function PatientProfileSetupPage() {
 
               {/* Navigation Buttons */}
               <div className="flex gap-4 pt-6 border-t border-border">
+                {myProfile && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setStep(0)}
+                    className="flex-1 rounded-full"
+                  >
+                    {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+                  </Button>
+                )}
                 <Button
                   onClick={() => setStep(2)}
                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-full gap-2"
@@ -433,7 +467,7 @@ export default function PatientProfileSetupPage() {
             <div className="space-y-8">
               {/* Medical History */}
               <div>
-                <label className="block text-sm font-semibold mb-4 flex items-center gap-2">
+                <label className="block text-sm font-semibold mb-4 items-center gap-2">
                   <Shield className="w-4 h-4" />
                   {lang === 'ar' ? 'الحالات الطبية السابقة' : 'Previous Medical Conditions'}
                 </label>
@@ -470,7 +504,7 @@ export default function PatientProfileSetupPage() {
 
               {/* Allergies */}
               <div>
-                <label className="block text-sm font-semibold mb-4 flex items-center gap-2">
+                <label className="block text-sm font-semibold mb-4 items-center gap-2">
                   <AlertCircle className="w-4 h-4" />
                   {lang === 'ar' ? 'الحساسيات والأدوية المحظورة' : 'Allergies & Banned Medications'}
                 </label>
@@ -568,7 +602,10 @@ export default function PatientProfileSetupPage() {
 
             <Button
               variant="outline"
-              onClick={() => setStep(2)}
+              onClick={() => {
+                loadProfileData()
+                setStep(1)
+              }}
               className="w-full rounded-full"
             >
               {lang === 'ar' ? 'تحديث البيانات' : 'Update Profile'}

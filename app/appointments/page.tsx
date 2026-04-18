@@ -589,7 +589,7 @@ export default function AppointmentsPage() {
   const [cancelling,  setCancelling] = useState(false)
   const [filter,      setFilter]     = useState<'all' | 'pending' | 'confirmed' | 'completed' | 'cancelled'>('all')
   const [activeTab,   setActiveTab]  = useState<'appointments' | 'invoices' | 'profile'>('appointments')
-  const { lang } = useI18n()
+  const { lang, t } = useI18n()
 
   // Show login wall for guests
   if (!isSignedIn) return <LoginWall lang={lang} />

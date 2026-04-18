@@ -467,6 +467,7 @@ export const translations = {
     msg_delete_failed: 'Failed to delete',
     msg_type_message: 'Type a message...',
 
+    chat_greeting: 'Hello! I am your HealWell assistant. How can I help you today?',
     chat_input_placeholder: 'Type a message...',
     chat_error_connection: 'I\'m having trouble connecting. Please try again.',
     chat_online: 'Online',
@@ -474,6 +475,10 @@ export const translations = {
     chat_suggestion_appointments: 'My appointments',
     chat_suggestion_doctor: 'Find doctor by specialty',
     chat_suggestion_hours: 'Hospital hours',
+
+    // Dashboard labels for navbar
+    admin_dashboard_label: 'Admin',
+    secretary_dashboard_label: 'Secretary',
   },
 
   ar: {
@@ -868,7 +873,7 @@ export const translations = {
     admin_role_updated: 'تم تحديث الدور إلى',
 
     // Secretary Dashboard
-    sec_panel: 'لوحة السكرتارية',
+    sec_panel: ' السكرتارية',
     sec_back_site: '→ العودة للموقع',
     sec_nav_appointments: 'المواعيد',
     sec_nav_profiles: 'ملفات المرضى',
@@ -946,6 +951,10 @@ export const translations = {
     msg_deleted_success: 'تم الحذف نهائياً',
     msg_delete_failed: 'فشل في الحذف',
     msg_type_message: 'اكتب رسالة...',
+
+    // Dashboard labels for navbar
+    admin_dashboard_label: ' الإدارة',
+    secretary_dashboard_label:'السكرتارية',
   },
 }
 

@@ -35,9 +35,9 @@ const Header = () => {
   // Role-specific dashboard link
   const dashboardLink = (() => {
     if (!isSignedIn || !role) return null
-    if (role === 'admin')     return { href: '/admin',     label: 'Admin Panel' }
+    if (role === 'admin')     return { href: '/admin',     label: t('admin_dashboard_label') }
     if (role === 'doctor')    return { href: '/doctor',    label: t('doctor_dashboard_label') }
-    if (role === 'secretary') return { href: '/secretary', label: 'Secretary' }
+    if (role === 'secretary') return { href: '/secretary', label: t('secretary_dashboard_label') }
     // guest: show appointments
     return { href: '/appointments', label: t('nav_appointments') }
   })()
